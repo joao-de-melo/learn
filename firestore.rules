@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Categories, challenge types, and levels are public read
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false; // Only seeded via admin
+    }
+
+    match /challengeTypes/{typeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /levels/{levelId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Accounts - only the owner can read/write
+    match /accounts/{accountId} {
+      allow read, write: if request.auth != null && request.auth.uid == accountId;
+    }
+
+    // Kids - only the parent account can access
+    match /kids/{kidId} {
+      allow read, write: if request.auth != null &&
+        resource.data.accountId == request.auth.uid;
+      allow create: if request.auth != null &&
+        request.resource.data.accountId == request.auth.uid;
+    }
+
+    // Games - only the owner account can access
+    match /games/{gameId} {
+      allow read, write: if request.auth != null &&
+        resource.data.accountId == request.auth.uid;
+      allow create: if request.auth != null &&
+        request.resource.data.accountId == request.auth.uid;
+    }
+
+    // Assignments - owner can manage, public can read via playToken (handled by function)
+    match /assignments/{assignmentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Progress - public write for play sessions (validated by function)
+    match /progress/{progressId} {
+      allow read, write: if true;
+    }
+  }
+}

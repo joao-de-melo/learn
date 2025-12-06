@@ -1,0 +1,46 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "assignments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "playToken", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "assignments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gameId", "order": "ASCENDING" },
+        { "fieldPath": "kidId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "progress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignmentId", "order": "ASCENDING" },
+        { "fieldPath": "levelId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "progress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignmentId", "order": "ASCENDING" },
+        { "fieldPath": "levelId", "order": "ASCENDING" },
+        { "fieldPath": "questionIndex", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "accountId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
