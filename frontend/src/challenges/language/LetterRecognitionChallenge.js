@@ -3,21 +3,21 @@ import BaseChallenge, { OptionButton } from '../BaseChallenge';
 
 export const challengeType = 'letter_recognition';
 
-function LetterRecognitionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview }) {
-  const { question_data, answer_data } = challenge;
+function LetterRecognitionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
+  const { questionData, answerData } = challenge;
 
   return (
     <>
-      <h2>{question_data.text}</h2>
+      <h2>{t('findTheLetter', { letter: questionData.target })}</h2>
 
       <div className="visual-display">
         <span style={{ fontSize: '120px', fontWeight: 'bold', color: '#4F46E5' }}>
-          {question_data.target}
+          {questionData.target}
         </span>
       </div>
 
       <div className="answer-options">
-        {answer_data.options.map((opt, i) => (
+        {answerData.options.map((opt, i) => (
           <OptionButton
             key={i}
             value={opt}
@@ -35,9 +35,9 @@ function LetterRecognitionRenderer({ challenge, selectedAnswer, result, isDisabl
   );
 }
 
-export default function LetterRecognitionChallenge({ challenge, onAnswer, isPreview }) {
+export default function LetterRecognitionChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} isPreview={isPreview}>
+    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
       {(props) => <LetterRecognitionRenderer {...props} />}
     </BaseChallenge>
   );

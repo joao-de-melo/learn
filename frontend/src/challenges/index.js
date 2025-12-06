@@ -31,7 +31,7 @@ const CHALLENGE_TYPES = {
 };
 
 // Main renderer component - automatically picks the right challenge type
-export default function ChallengeRenderer({ challenge, onAnswer, isPreview = false }) {
+export default function ChallengeRenderer({ challenge, onAnswer, onComplete, isPreview = false, language = 'pt' }) {
   const ChallengeComponent = CHALLENGE_TYPES[challenge.question_type];
 
   if (!ChallengeComponent) {
@@ -47,7 +47,9 @@ export default function ChallengeRenderer({ challenge, onAnswer, isPreview = fal
     <ChallengeComponent
       challenge={challenge}
       onAnswer={onAnswer}
+      onComplete={onComplete}
       isPreview={isPreview}
+      language={language}
     />
   );
 }

@@ -1,17 +1,16 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import { auth } from '../config/firebase';
+
+// Local: Use hosting emulator which rewrites /api/** to functions emulator
+// Production: Use relative path (same origin, Firebase Hosting rewrites to functions)
+const useEmulators = process.env.REACT_APP_USE_EMULATORS === 'true';
+const API_URL = useEmulators ? 'http://localhost:5000/api' : '/api';
 
 class ApiService {
-  constructor() {
-    this.token = localStorage.getItem('token');
-  }
-
-  setToken(token) {
-    this.token = token;
-    if (token) {
-      localStorage.setItem('token', token);
-    } else {
-      localStorage.removeItem('token');
+  async getToken() {
+    if (auth.currentUser) {
+      return auth.currentUser.getIdToken();
     }
+    return null;
   }
 
   async request(endpoint, options = {}) {
@@ -20,8 +19,9 @@ class ApiService {
       ...options.headers,
     };
 
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    const token = await this.getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -36,33 +36,6 @@ class ApiService {
     }
 
     return data;
-  }
-
-  // Auth
-  async register(email, password, name) {
-    const data = await this.request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name }),
-    });
-    this.setToken(data.token);
-    return data;
-  }
-
-  async login(email, password) {
-    const data = await this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    this.setToken(data.token);
-    return data;
-  }
-
-  async getMe() {
-    return this.request('/auth/me');
-  }
-
-  logout() {
-    this.setToken(null);
   }
 
   // Kids
@@ -181,15 +154,32 @@ class ApiService {
     return this.request(`/play/${token}`);
   }
 
-  async getPlayLevel(token, levelId) {
-    return this.request(`/play/${token}/level/${levelId}`);
+  async getPlayChallenge(token, challengeTypeId) {
+    return this.request(`/play/${token}/challenge/${challengeTypeId}`);
   }
 
-  async submitAnswer(token, levelId, questionIndex, answer) {
-    return this.request(`/play/${token}/level/${levelId}/question/${questionIndex}/answer`, {
+  async submitAnswer(token, challengeTypeId, questionIndex, answer, questionData, sessionId) {
+    return this.request(`/play/${token}/challenge/${challengeTypeId}/question/${questionIndex}/answer`, {
       method: 'POST',
-      body: JSON.stringify({ answer }),
+      body: JSON.stringify({ answer, questionData, sessionId }),
     });
+  }
+
+  async recordChallengeRepeat(token, challengeTypeId) {
+    return this.request(`/play/${token}/challenge/${challengeTypeId}/repeat`, {
+      method: 'POST',
+    });
+  }
+
+  async completeGame(token) {
+    return this.request(`/play/${token}/complete`, {
+      method: 'POST',
+    });
+  }
+
+  // Kid metrics
+  async getKidMetrics(kidId) {
+    return this.request(`/kids/${kidId}/metrics`);
   }
 }
 

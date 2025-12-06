@@ -4,15 +4,15 @@ import { getIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'odd_one_out';
 
-function OddOneOutRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview }) {
-  const { question_data } = challenge;
+function OddOneOutRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
+  const { questionData } = challenge;
 
   return (
     <>
-      <h2>{question_data.text}</h2>
+      <h2>{t('whichOneIsDifferent')}</h2>
 
       <div className="answer-options" style={{ marginTop: '30px' }}>
-        {question_data.items.map((item, i) => (
+        {questionData.items.map((item, i) => (
           <OptionButton
             key={i}
             value={i}
@@ -31,9 +31,9 @@ function OddOneOutRenderer({ challenge, selectedAnswer, result, isDisabled, onSe
   );
 }
 
-export default function OddOneOutChallenge({ challenge, onAnswer, isPreview }) {
+export default function OddOneOutChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} isPreview={isPreview}>
+    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
       {(props) => <OddOneOutRenderer {...props} />}
     </BaseChallenge>
   );

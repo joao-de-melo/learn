@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
+import { usePlayLanguage } from '../i18n';
 
 // Base wrapper for all challenge types
-// Handles common logic: answer submission, feedback display, disabled state
+// Handles common logic: answer submission, feedback display, auto-advance
 
 export default function BaseChallenge({
   challenge,
   onAnswer,
+  onComplete,
   isPreview = false,
+  language = 'pt',
   children
 }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [result, setResult] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const { t } = usePlayLanguage(language);
 
   const handleSelect = async (answer) => {
     if (result || submitting || isPreview) return;
@@ -22,6 +26,13 @@ export default function BaseChallenge({
     try {
       const response = await onAnswer(answer);
       setResult(response);
+
+      // Auto-advance after showing feedback
+      setTimeout(() => {
+        if (onComplete) {
+          onComplete(response.isCorrect);
+        }
+      }, response.isCorrect ? 1000 : 1500);
     } finally {
       setSubmitting(false);
     }
@@ -35,16 +46,30 @@ export default function BaseChallenge({
     isPreview,
     isDisabled: result !== null || submitting || isPreview,
     onSelect: handleSelect,
-    correctAnswer: challenge.answer_data.correct,
+    correctAnswer: challenge.answerData?.correct,
+    t,
+    language,
   };
 
   return (
-    <div className="challenge-display">
+    <div className={`challenge-display ${result ? (result.isCorrect ? 'result-correct' : 'result-incorrect') : ''}`}>
       {typeof children === 'function' ? children(challengeProps) : children}
 
       {result && !isPreview && (
-        <div className={`feedback ${result.is_correct ? 'correct' : 'incorrect'}`}>
-          {result.is_correct ? 'Correct! Great job!' : 'Not quite. Try again next time!'}
+        <div className={`feedback-overlay ${result.isCorrect ? 'correct' : 'incorrect'}`}>
+          <div className="feedback-content">
+            {result.isCorrect ? (
+              <>
+                <span className="feedback-icon">⭐</span>
+                <span className="feedback-text">{t('greatJob')}</span>
+              </>
+            ) : (
+              <>
+                <span className="feedback-icon">❌</span>
+                <span className="feedback-text">{t('wrong')}</span>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

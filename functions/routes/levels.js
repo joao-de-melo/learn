@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../config');
+const { db } = require('../db');
 
 const router = express.Router();
 
@@ -169,6 +169,14 @@ router.get('/:id', async (req, res) => {
       }
     }
 
+    // Add question_type to each question so the frontend ChallengeRenderer can display them
+    if (level.questions && level.renderer) {
+      level.questions = level.questions.map(q => ({
+        ...q,
+        question_type: level.renderer
+      }));
+    }
+
     res.json(level);
   } catch (err) {
     console.error('Get level error:', err);
@@ -201,7 +209,11 @@ router.get('/:id/preview', async (req, res) => {
     }
 
     // Return only first 3 questions as preview
-    const previewQuestions = (level.questions || []).slice(0, 3);
+    // Add question_type to each question so the frontend ChallengeRenderer can display them
+    const previewQuestions = (level.questions || []).slice(0, 3).map(q => ({
+      ...q,
+      question_type: level.renderer
+    }));
 
     res.json({
       ...level,

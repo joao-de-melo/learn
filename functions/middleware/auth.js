@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken');
-const { jwtSecret } = require('../config');
+const admin = require('firebase-admin');
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,10 +10,12 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, jwtSecret);
-    req.accountId = decoded.accountId;
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.accountId = decodedToken.uid;
+    req.user = decodedToken;
     next();
   } catch (err) {
+    console.error('Auth error:', err);
     return res.status(401).json({ error: 'Invalid token' });
   }
 };

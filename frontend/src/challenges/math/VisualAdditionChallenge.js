@@ -1,30 +1,58 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BaseChallenge, { OptionButton } from '../BaseChallenge';
-import { IconDisplay } from '../../components/IconDisplay';
+import { IconDisplay, getRandomIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'visual_addition';
 
-function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview }) {
-  const { question_data, answer_data } = challenge;
+function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
+  const { questionData, answerData } = challenge;
+
+  // Generate random icon once per question (memoized so it doesn't change on re-render)
+  const iconType = useMemo(() => {
+    return questionData.iconType || getRandomIcon();
+  }, [questionData.iconType]);
+
+  // Support both old format (left/right arrays) and new format (leftCount/rightCount + iconType)
+  const leftIcons = useMemo(() => {
+    if (questionData.left) {
+      return questionData.left;
+    }
+    return Array(questionData.leftCount).fill(iconType);
+  }, [questionData.left, questionData.leftCount, iconType]);
+
+  const rightIcons = useMemo(() => {
+    if (questionData.right) {
+      return questionData.right;
+    }
+    return Array(questionData.rightCount).fill(iconType);
+  }, [questionData.right, questionData.rightCount, iconType]);
+
+  // Generate icons for answer options
+  const getOptionIcons = (opt) => {
+    if (opt.icons) {
+      return opt.icons;
+    }
+    return Array(opt.count).fill(iconType);
+  };
 
   return (
     <>
-      <h2>{question_data.text}</h2>
+      <h2>{t('howManyInTotal')}</h2>
 
       <div className="visual-display">
         <div className="visual-group">
-          <IconDisplay icons={question_data.left} size="large" />
+          <IconDisplay icons={leftIcons} size="large" />
         </div>
         <span className="operator">+</span>
         <div className="visual-group">
-          <IconDisplay icons={question_data.right} size="large" />
+          <IconDisplay icons={rightIcons} size="large" />
         </div>
         <span className="operator">=</span>
         <span className="operator">?</span>
       </div>
 
       <div className="answer-options">
-        {answer_data.options.map((opt, i) => (
+        {answerData.options.map((opt, i) => (
           <OptionButton
             key={i}
             value={opt.value}
@@ -35,7 +63,7 @@ function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled,
             onClick={onSelect}
             className="visual"
           >
-            <IconDisplay icons={opt.icons} size="normal" />
+            <IconDisplay icons={getOptionIcons(opt)} size="normal" />
           </OptionButton>
         ))}
       </div>
@@ -43,9 +71,9 @@ function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled,
   );
 }
 
-export default function VisualAdditionChallenge({ challenge, onAnswer, isPreview }) {
+export default function VisualAdditionChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} isPreview={isPreview}>
+    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
       {(props) => <VisualAdditionRenderer {...props} />}
     </BaseChallenge>
   );

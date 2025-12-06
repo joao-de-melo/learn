@@ -1,22 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BaseChallenge, { OptionButton } from '../BaseChallenge';
-import { IconDisplay } from '../../components/IconDisplay';
+import { IconDisplay, getRandomIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'counting';
 
-function CountingRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview }) {
-  const { question_data, answer_data } = challenge;
+function CountingRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
+  const { questionData, answerData } = challenge;
+
+  // Generate random icon once per question (memoized so it doesn't change on re-render)
+  const iconType = useMemo(() => {
+    return questionData.iconType || getRandomIcon();
+  }, [questionData.iconType]);
+
+  // Support both old format (icons array) and new format (count + iconType)
+  const icons = useMemo(() => {
+    if (questionData.icons) {
+      return questionData.icons;
+    }
+    return Array(questionData.count).fill(iconType);
+  }, [questionData.icons, questionData.count, iconType]);
 
   return (
     <>
-      <h2>{question_data.text}</h2>
+      <h2>{t('howManyDoYouSee')}</h2>
 
       <div className="visual-display">
-        <IconDisplay icons={question_data.icons} size="large" />
+        <IconDisplay icons={icons} size="large" />
       </div>
 
       <div className="answer-options">
-        {answer_data.options.map((opt, i) => (
+        {answerData.options.map((opt, i) => (
           <OptionButton
             key={i}
             value={opt}
@@ -34,9 +47,9 @@ function CountingRenderer({ challenge, selectedAnswer, result, isDisabled, onSel
   );
 }
 
-export default function CountingChallenge({ challenge, onAnswer, isPreview }) {
+export default function CountingChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} isPreview={isPreview}>
+    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
       {(props) => <CountingRenderer {...props} />}
     </BaseChallenge>
   );

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import LevelPreview from '../components/LevelPreview';
 import api from '../services/api';
+import { useLanguage } from '../i18n';
 
 const AVATARS = {
   bear: '\uD83D\uDC3B',
@@ -14,14 +14,15 @@ const AVATARS = {
 };
 
 export default function GameDetail() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const [game, setGame] = useState(null);
   const [kids, setKids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [previewLevelId, setPreviewLevelId] = useState(null);
   const [error, setError] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active'); // 'active', 'completed', 'all'
 
   useEffect(() => {
     loadData();
@@ -53,7 +54,7 @@ export default function GameDetail() {
   };
 
   const handleRemoveAssignment = async (assignmentId) => {
-    if (window.confirm('Remove this assignment?')) {
+    if (window.confirm(t('removeAssignmentConfirm'))) {
       await api.deleteAssignment(assignmentId);
       loadData();
     }
@@ -62,13 +63,13 @@ export default function GameDetail() {
   const copyPlayLink = (token) => {
     const url = `${window.location.origin}/play/${token}`;
     navigator.clipboard.writeText(url);
-    alert('Play link copied to clipboard!');
+    alert(t('playLinkCopied'));
   };
 
   if (loading) {
     return (
       <Layout>
-        <p>Loading...</p>
+        <p>{t('loading')}</p>
       </Layout>
     );
   }
@@ -78,145 +79,243 @@ export default function GameDetail() {
       <Layout>
         <div className="error-message">{error}</div>
         <button className="btn btn-secondary" onClick={() => navigate('/games')}>
-          Back to Games
+          {t('backToGames')}
         </button>
       </Layout>
     );
   }
 
-  const assignedKidIds = game.assignments.map(a => a.kid_id);
-  const unassignedKids = kids.filter(k => !assignedKidIds.includes(k.id));
+  // All kids can be assigned (multiple assignments per kid allowed)
+  const totalQuestions = (game.challenges || []).reduce((sum, c) => sum + c.questionCount, 0);
+
+  // Filter assignments based on status filter
+  const filteredAssignments = game.assignments.filter(a => {
+    if (statusFilter === 'active') return a.isActive;
+    if (statusFilter === 'completed') return !a.isActive && a.completedAt;
+    return true; // 'all'
+  });
+
+  const activeCount = game.assignments.filter(a => a.isActive).length;
+  const completedCount = game.assignments.filter(a => !a.isActive && a.completedAt).length;
 
   return (
     <Layout>
       <div className="page-header">
-        <div>
-          <button
-            className="btn btn-secondary"
-            onClick={() => navigate('/games')}
-            style={{ marginBottom: '8px' }}
-          >
-            Back to Games
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button className="btn btn-secondary" onClick={() => navigate('/games')}>
+            {t('back')}
           </button>
-          <h1>{game.name}</h1>
-          {game.description && <p style={{ color: '#6b7280' }}>{game.description}</p>}
+          <div>
+            <h1>{game.name}</h1>
+            {game.description && <p style={{ color: '#6b7280', margin: 0 }}>{game.description}</p>}
+          </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAssignModal(true)}>
-          Assign to Kid
-        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      <h2 style={{ marginBottom: '20px' }}>Levels ({game.levels.length})</h2>
-      {game.levels.length === 0 ? (
-        <div className="card">
-          <p>No levels added to this game.</p>
+      {/* Game Stats */}
+      <div className="stats-grid" style={{ marginBottom: '32px' }}>
+        <div className="stat-card">
+          <div className="stat-value">{(game.challenges || []).length}</div>
+          <div className="stat-label">{t('challenges')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{totalQuestions}</div>
+          <div className="stat-label">{t('totalQuestions')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{game.assignments.length}</div>
+          <div className="stat-label">{t('kidsAssigned')}</div>
+        </div>
+      </div>
+
+      {/* Challenges Section */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h2 style={{ margin: 0 }}>{t('challenges')}</h2>
+      </div>
+
+      {(game.challenges || []).length === 0 ? (
+        <div className="card" style={{ marginBottom: '32px' }}>
+          <p>{t('noChallengesInGame')}</p>
         </div>
       ) : (
-        <div className="card-grid">
-          {game.levels.map(level => (
-            <div className="card" key={level.id}>
-              <h3>{level.name}</h3>
-              <p>{level.description}</p>
-              <div className="card-meta">
-                <span>{level.category_name}</span>
-                <span>Ages {level.min_age}-{level.max_age}</span>
-                <span>{level.challenge_count} challenges</span>
-              </div>
-              <div className="card-actions">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setPreviewLevelId(level.id)}
-                >
-                  Preview
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="table-container" style={{ marginBottom: '32px' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{t('challenge')}</th>
+                <th>{t('category')}</th>
+                <th>{t('questions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(game.challenges || []).map(challenge => {
+                const challengeKey = challenge.renderer || challenge.challengeTypeId;
+                const categoryKey = challenge.categoryId;
+                return (
+                  <tr key={challenge.challengeTypeId}>
+                    <td>
+                      <strong>{t(`challenge_${challengeKey}`) || challenge.name}</strong>
+                      <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+                        {t(`challenge_${challengeKey}_desc`) || challenge.description}
+                      </div>
+                    </td>
+                    <td>{t(`category_${categoryKey}`) || challenge.categoryName}</td>
+                    <td>{challenge.questionCount}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      <h2 style={{ marginTop: '40px', marginBottom: '20px' }}>
-        Assignments ({game.assignments.length})
-      </h2>
+      {/* Assignments Section */}
+      <h2 style={{ marginBottom: '16px' }}>{t('assignments')}</h2>
+      <div style={{ marginBottom: '16px' }}>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowAssignModal(true)}>
+          + {t('assignToKid')}
+        </button>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="filter-tabs" style={{ marginBottom: '16px' }}>
+        <button
+          className={`filter-tab ${statusFilter === 'active' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('active')}
+        >
+          {t('active')}
+          {activeCount > 0 && <span className="filter-tab-count">{activeCount}</span>}
+        </button>
+        <button
+          className={`filter-tab ${statusFilter === 'completed' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('completed')}
+        >
+          {t('completed')}
+          {completedCount > 0 && <span className="filter-tab-count">{completedCount}</span>}
+        </button>
+        <button
+          className={`filter-tab ${statusFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('all')}
+        >
+          {t('all')}
+          <span className="filter-tab-count">{game.assignments.length}</span>
+        </button>
+      </div>
+
       {game.assignments.length === 0 ? (
         <div className="card">
-          <p>No kids assigned yet. Click "Assign to Kid" to create a play link.</p>
+          <p>{t('noAssignmentsYet')}</p>
+        </div>
+      ) : filteredAssignments.length === 0 ? (
+        <div className="card">
+          <p>{statusFilter === 'active' ? t('noActiveAssignments') : t('noCompletedAssignments')}</p>
         </div>
       ) : (
-        <div className="card-grid">
-          {game.assignments.map(assignment => (
-            <div className="card" key={assignment.id}>
-              <div className="assignment-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div className="kid-avatar" style={{ width: '48px', height: '48px', fontSize: '24px' }}>
-                    {AVATARS[assignment.kid_avatar] || AVATARS.bear}
-                  </div>
-                  <div>
-                    <h3 style={{ marginBottom: '4px' }}>{assignment.kid_name}</h3>
-                    <span
-                      style={{
-                        background: assignment.is_active ? '#dcfce7' : '#fee2e2',
-                        color: assignment.is_active ? '#166534' : '#991b1b',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {assignment.is_active ? 'Active' : 'Inactive'}
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{t('kid')}</th>
+                <th>{t('status')}</th>
+                <th>{t('playLink')}</th>
+                <th>{t('actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAssignments.map(assignment => (
+                <tr key={assignment.id}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '24px' }}>
+                        {AVATARS[assignment.kidAvatar] || AVATARS.bear}
+                      </span>
+                      <div>
+                        <strong>{assignment.kidName}</strong>
+                        {assignment.completedAt && (
+                          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                            {t('completedOn')} {new Date(assignment.completedAt._seconds ? assignment.completedAt._seconds * 1000 : assignment.completedAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${assignment.isActive ? 'success' : 'completed'}`}>
+                      {assignment.isActive ? t('active') : t('completed')}
                     </span>
-                  </div>
-                </div>
-              </div>
-              <div className="play-link" style={{ marginTop: '16px' }}>
-                /play/{assignment.play_token.substring(0, 8)}...
-              </div>
-              <div className="card-actions" style={{ marginTop: '16px' }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => copyPlayLink(assignment.play_token)}
-                >
-                  Copy Link
-                </button>
-                <a
-                  href={`/play/${assignment.play_token}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary"
-                >
-                  Open
-                </a>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleRemoveAssignment(assignment.id)}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
+                  </td>
+                  <td>
+                    <code style={{
+                      background: '#f3f4f6',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '13px'
+                    }}>
+                      /play/{assignment.playToken.substring(0, 8)}...
+                    </code>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {assignment.isActive && (
+                        <>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => copyPlayLink(assignment.playToken)}
+                          >
+                            {t('copy')}
+                          </button>
+                          <a
+                            href={`/play/${assignment.playToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-sm"
+                          >
+                            {t('open')}
+                          </a>
+                        </>
+                      )}
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleRemoveAssignment(assignment.id)}
+                      >
+                        {t('remove')}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
+      {/* Assign Modal */}
       {showAssignModal && (
         <div className="modal-overlay" onClick={() => setShowAssignModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>Assign Game to Kid</h2>
+            <h2>{t('assignGameToKid')}</h2>
 
-            {unassignedKids.length === 0 ? (
-              <p>All kids have already been assigned to this game.</p>
+            {kids.length === 0 ? (
+              <p style={{ color: '#6b7280' }}>{t('noKidsYet')}</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {unassignedKids.map(kid => (
+                {kids.map(kid => (
                   <button
                     key={kid.id}
                     className="btn btn-secondary"
                     onClick={() => handleAssign(kid.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'flex-start' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      justifyContent: 'flex-start',
+                      padding: '12px 16px'
+                    }}
                   >
-                    <span style={{ fontSize: '24px' }}>{AVATARS[kid.avatar] || AVATARS.bear}</span>
-                    <span>{kid.name}</span>
+                    <span style={{ fontSize: '28px' }}>{AVATARS[kid.avatar] || AVATARS.bear}</span>
+                    <span style={{ fontSize: '16px' }}>{kid.name}</span>
                   </button>
                 ))}
               </div>
@@ -224,15 +323,11 @@ export default function GameDetail() {
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowAssignModal(false)}>
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {previewLevelId && (
-        <LevelPreview levelId={previewLevelId} onClose={() => setPreviewLevelId(null)} />
       )}
     </Layout>
   );

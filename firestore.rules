@@ -1,10 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns this resource
+    function isOwner(accountId) {
+      return isAuth() && request.auth.uid == accountId;
+    }
+
     // Categories, challenge types, and levels are public read
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if false; // Only seeded via admin
+      allow write: if false;
     }
 
     match /challengeTypes/{typeId} {
@@ -17,33 +27,31 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Accounts - only the owner can read/write
+    // Accounts - users can read/write their own account
     match /accounts/{accountId} {
-      allow read, write: if request.auth != null && request.auth.uid == accountId;
+      allow read, write: if isOwner(accountId);
+      allow create: if isAuth() && request.auth.uid == accountId;
     }
 
     // Kids - only the parent account can access
     match /kids/{kidId} {
-      allow read, write: if request.auth != null &&
-        resource.data.accountId == request.auth.uid;
-      allow create: if request.auth != null &&
-        request.resource.data.accountId == request.auth.uid;
+      allow read, write: if isAuth() && resource.data.accountId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.accountId == request.auth.uid;
     }
 
     // Games - only the owner account can access
     match /games/{gameId} {
-      allow read, write: if request.auth != null &&
-        resource.data.accountId == request.auth.uid;
-      allow create: if request.auth != null &&
-        request.resource.data.accountId == request.auth.uid;
+      allow read, write: if isAuth() && resource.data.accountId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.accountId == request.auth.uid;
     }
 
-    // Assignments - owner can manage, public can read via playToken (handled by function)
+    // Assignments - owner can manage via Cloud Functions
     match /assignments/{assignmentId} {
-      allow read, write: if request.auth != null;
+      allow read: if isAuth();
+      allow write: if isAuth();
     }
 
-    // Progress - public write for play sessions (validated by function)
+    // Progress - public write for play sessions
     match /progress/{progressId} {
       allow read, write: if true;
     }

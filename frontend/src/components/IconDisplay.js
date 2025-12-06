@@ -9,6 +9,8 @@ const ICON_MAP = {
   car: '\uD83D\uDE97',
   apple: '\uD83C\uDF4E',
   fish: '\uD83D\uDC1F',
+  bird: '\uD83D\uDC26',
+  ball: '\u26BD',
   book: '\uD83D\uDCD6',
   puzzle: '\uD83E\uDDE9',
   calculator: '\uD83E\uDDEE',
@@ -24,17 +26,24 @@ const ICON_MAP = {
   banana: '\uD83C\uDF4C',
 };
 
+// Icons suitable for counting exercises
+const COUNTING_ICONS = ['star', 'bear', 'robot', 'heart', 'flower', 'apple', 'ball', 'car', 'fish', 'bird'];
+
+export function getRandomIcon() {
+  return COUNTING_ICONS[Math.floor(Math.random() * COUNTING_ICONS.length)];
+}
+
 export function getIcon(name) {
   return ICON_MAP[name] || name;
 }
 
-export function IconDisplay({ icons, size = 'normal' }) {
-  const fontSize = size === 'large' ? '48px' : size === 'small' ? '24px' : '32px';
-
+export function IconDisplay({ icons, size = 'normal', crossedOut = 0 }) {
   return (
-    <span style={{ fontSize, display: 'inline-flex', gap: '4px' }}>
+    <span className={`icon-display icon-display-${size}`}>
       {icons.map((icon, i) => (
-        <span key={i}>{getIcon(icon)}</span>
+        <span key={i} className={i < crossedOut ? 'crossed-out' : ''}>
+          {getIcon(icon)}
+        </span>
       ))}
     </span>
   );

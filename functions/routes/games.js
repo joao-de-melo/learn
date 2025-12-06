@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../config');
+const { db } = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -21,9 +21,13 @@ router.get('/', async (req, res) => {
         .where('gameId', '==', doc.id)
         .get();
 
+      // Calculate total questions from challenges
+      const totalQuestions = (game.challenges || []).reduce((sum, c) => sum + (c.questionCount || 0), 0);
+
       return {
         ...game,
-        levelCount: (game.levelIds || []).length,
+        challengeCount: (game.challenges || []).length,
+        totalQuestions,
         assignmentCount: assignmentsSnap.size
       };
     }));
@@ -35,7 +39,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single game with levels and assignments
+// Get single game with challenges and assignments
 router.get('/:id', async (req, res) => {
   try {
     const doc = await db.collection('games').doc(req.params.id).get();
@@ -46,26 +50,22 @@ router.get('/:id', async (req, res) => {
 
     const game = { id: doc.id, ...doc.data() };
 
-    // Get levels info
-    const levels = [];
-    for (const levelId of (game.levelIds || [])) {
-      const levelDoc = await db.collection('levels').doc(levelId).get();
-      if (levelDoc.exists) {
-        const level = { id: levelDoc.id, ...levelDoc.data() };
+    // Get challenge types info for the game's challenges
+    const challengesWithInfo = [];
+    for (const challenge of (game.challenges || [])) {
+      const ctDoc = await db.collection('challengeTypes').doc(challenge.challengeTypeId).get();
+      if (ctDoc.exists) {
+        const ct = ctDoc.data();
+        const catDoc = await db.collection('categories').doc(ct.categoryId).get();
 
-        // Get challenge type info
-        const ctDoc = await db.collection('challengeTypes').doc(level.challengeTypeId).get();
-        if (ctDoc.exists) {
-          level.challengeTypeName = ctDoc.data().name;
-          level.renderer = ctDoc.data().renderer;
-
-          const catDoc = await db.collection('categories').doc(ctDoc.data().categoryId).get();
-          if (catDoc.exists) {
-            level.categoryName = catDoc.data().name;
-          }
-        }
-
-        levels.push(level);
+        challengesWithInfo.push({
+          ...challenge,
+          name: ct.name,
+          description: ct.description,
+          renderer: ct.renderer,
+          categoryId: ct.categoryId,
+          categoryName: catDoc.exists ? catDoc.data().name : null
+        });
       }
     }
 
@@ -84,7 +84,7 @@ router.get('/:id', async (req, res) => {
       return assignment;
     }));
 
-    res.json({ ...game, levels, assignments });
+    res.json({ ...game, challenges: challengesWithInfo, assignments });
   } catch (err) {
     console.error('Get game error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -94,17 +94,22 @@ router.get('/:id', async (req, res) => {
 // Create game
 router.post('/', async (req, res) => {
   try {
-    const { name, description, levelIds } = req.body;
+    const { name, description, challenges, language } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
+    }
+
+    if (!challenges || challenges.length === 0) {
+      return res.status(400).json({ error: 'At least one challenge is required' });
     }
 
     const gameData = {
       accountId: req.accountId,
       name,
       description: description || null,
-      levelIds: levelIds || [],
+      language: language || 'pt', // Default to Portuguese
+      challenges: challenges || [],
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -120,7 +125,7 @@ router.post('/', async (req, res) => {
 // Update game
 router.put('/:id', async (req, res) => {
   try {
-    const { name, description, levelIds } = req.body;
+    const { name, description, challenges, language } = req.body;
     const docRef = db.collection('games').doc(req.params.id);
     const doc = await docRef.get();
 
@@ -131,57 +136,14 @@ router.put('/:id', async (req, res) => {
     const updates = { updatedAt: new Date() };
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
-    if (levelIds !== undefined) updates.levelIds = levelIds;
+    if (challenges !== undefined) updates.challenges = challenges;
+    if (language !== undefined) updates.language = language;
 
     await docRef.update(updates);
     const updated = await docRef.get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err) {
     console.error('Update game error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Add level to game
-router.post('/:id/levels', async (req, res) => {
-  try {
-    const { levelId } = req.body;
-    const docRef = db.collection('games').doc(req.params.id);
-    const doc = await docRef.get();
-
-    if (!doc.exists || doc.data().accountId !== req.accountId) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
-
-    const levelIds = doc.data().levelIds || [];
-    if (!levelIds.includes(levelId)) {
-      levelIds.push(levelId);
-      await docRef.update({ levelIds, updatedAt: new Date() });
-    }
-
-    res.json({ message: 'Level added' });
-  } catch (err) {
-    console.error('Add level error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Remove level from game
-router.delete('/:id/levels/:levelId', async (req, res) => {
-  try {
-    const docRef = db.collection('games').doc(req.params.id);
-    const doc = await docRef.get();
-
-    if (!doc.exists || doc.data().accountId !== req.accountId) {
-      return res.status(404).json({ error: 'Game not found' });
-    }
-
-    const levelIds = (doc.data().levelIds || []).filter(id => id !== req.params.levelId);
-    await docRef.update({ levelIds, updatedAt: new Date() });
-
-    res.json({ message: 'Level removed' });
-  } catch (err) {
-    console.error('Remove level error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

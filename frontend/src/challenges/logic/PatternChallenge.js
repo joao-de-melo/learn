@@ -4,22 +4,22 @@ import { getIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'pattern';
 
-function PatternRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview }) {
-  const { question_data, answer_data } = challenge;
+function PatternRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
+  const { questionData, answerData } = challenge;
 
   return (
     <>
-      <h2>{question_data.text}</h2>
+      <h2>{t('whatComesNext')}</h2>
 
       <div className="visual-display">
-        {question_data.pattern.map((item, i) => (
+        {questionData.pattern.map((item, i) => (
           <span key={i} style={{ fontSize: '48px' }}>{getIcon(item)}</span>
         ))}
         <span style={{ fontSize: '48px', marginLeft: '16px' }}>?</span>
       </div>
 
       <div className="answer-options">
-        {answer_data.options.map((opt, i) => (
+        {answerData.options.map((opt, i) => (
           <OptionButton
             key={i}
             value={opt}
@@ -37,9 +37,9 @@ function PatternRenderer({ challenge, selectedAnswer, result, isDisabled, onSele
   );
 }
 
-export default function PatternChallenge({ challenge, onAnswer, isPreview }) {
+export default function PatternChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} isPreview={isPreview}>
+    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
       {(props) => <PatternRenderer {...props} />}
     </BaseChallenge>
   );

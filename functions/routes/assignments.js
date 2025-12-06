@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { db } = require('../config');
+const { db } = require('../db');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
@@ -26,19 +26,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Kid not found' });
     }
 
-    // Check if assignment already exists
-    const existingSnap = await db.collection('assignments')
-      .where('gameId', '==', gameId)
-      .where('kidId', '==', kidId)
-      .limit(1)
-      .get();
-
-    if (!existingSnap.empty) {
-      const existing = { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
-      return res.json(existing);
-    }
-
-    // Create new assignment
+    // Create new assignment (multiple assignments for same kid+game allowed, each gets unique playToken)
     const assignmentData = {
       gameId,
       kidId,

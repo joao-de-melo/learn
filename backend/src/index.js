@@ -1,27 +1,15 @@
+// This file is kept for local development only
+// Production uses Firebase Cloud Functions (see /functions)
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-
-const authRoutes = require('./routes/auth');
-const kidsRoutes = require('./routes/kids');
-const levelsRoutes = require('./routes/levels');
-const gamesRoutes = require('./routes/games');
-const assignmentsRoutes = require('./routes/assignments');
-const playRoutes = require('./routes/play');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/kids', kidsRoutes);
-app.use('/api/levels', levelsRoutes);
-app.use('/api/games', gamesRoutes);
-app.use('/api/assignments', assignmentsRoutes);
-app.use('/api/play', playRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -30,4 +18,5 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Note: For full API, use Firebase emulators (make emulators)');
 });

@@ -41,27 +41,27 @@ export default function LevelPreview({ levelId, onClose }) {
         <h2>{preview.name}</h2>
         <p style={{ color: '#6b7280', marginBottom: '8px' }}>{preview.description}</p>
         <div className="level-meta" style={{ marginBottom: '20px' }}>
-          <span>Ages {preview.min_age}-{preview.max_age}</span>
+          <span>Ages {preview.minAge}-{preview.maxAge}</span>
           <span>|</span>
-          <span>{preview.total_challenges} challenges</span>
+          <span>{preview.totalQuestions} questions</span>
           <span>|</span>
-          <span>{preview.category_name}</span>
+          <span>{preview.categoryName}</span>
         </div>
 
         <div className="preview-container">
-          <h3 style={{ marginBottom: '16px' }}>Sample Challenges</h3>
-          {preview.preview_challenges.map((challenge, i) => (
+          <h3 style={{ marginBottom: '16px' }}>Sample Questions</h3>
+          {(preview.previewQuestions || []).map((question, i) => (
             <div key={i} className="preview-challenge">
               <ChallengeRenderer
-                challenge={challenge}
-                onAnswer={() => Promise.resolve({ is_correct: true })}
+                challenge={question}
+                onAnswer={() => Promise.resolve({ isCorrect: true })}
                 isPreview={true}
               />
             </div>
           ))}
-          {preview.total_challenges > 3 && (
+          {preview.totalQuestions > 3 && (
             <p style={{ textAlign: 'center', color: '#6b7280', marginTop: '16px' }}>
-              ...and {preview.total_challenges - 3} more challenges
+              ...and {preview.totalQuestions - 3} more questions
             </p>
           )}
         </div>

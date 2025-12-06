@@ -1,28 +1,23 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
 
-admin.initializeApp();
+// Initialize firebase-admin via db.js
+require('./db');
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// Share the db instance
-const db = admin.firestore();
-module.exports.db = db;
-
 // Import routes
-const authRoutes = require('./routes/auth');
 const kidsRoutes = require('./routes/kids');
 const levelsRoutes = require('./routes/levels');
 const gamesRoutes = require('./routes/games');
 const assignmentsRoutes = require('./routes/assignments');
 const playRoutes = require('./routes/play');
 
-// Routes
-app.use('/api/auth', authRoutes);
+// Routes (auth is handled by Firebase Auth SDK on frontend)
+// Firebase Hosting rewrites /api/** to this function, preserving the /api prefix
 app.use('/api/kids', kidsRoutes);
 app.use('/api/levels', levelsRoutes);
 app.use('/api/games', gamesRoutes);
