@@ -235,10 +235,9 @@ const questionGenerators = {
   },
 
   icon_search: (config) => {
-    const { gridSize = 36, targetCount = 1, questionCount = 5, symbolSet = 'colorful' } = config;
-    // Calculate grid columns based on size
-    const gridCols = Math.ceil(Math.sqrt(gridSize));
-    const actualGridSize = gridCols * gridCols;
+    const { gridCols = 6, gridRows = 8, targetCount = 1, questionCount = 5, symbolSet = 'colorful' } = config;
+    // Total cells in the grid
+    const totalCells = gridCols * gridRows;
 
     // Symbol sets - each contains visually similar symbols for discrimination
     const SYMBOL_SETS = {
@@ -320,7 +319,7 @@ const questionGenerators = {
     const symbolPool = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
 
     // Use only a small subset of symbols (5-8 different ones)
-    const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(actualGridSize / 6)));
+    const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(totalCells / 6)));
 
     const questions = [];
     for (let q = 0; q < questionCount; q++) {
@@ -333,7 +332,7 @@ const questionGenerators = {
       const fillerSymbols = availableSymbols.slice(targetCount);
 
       // Calculate how many times each target should appear (roughly 10-20% of grid)
-      const targetOccurrences = Math.max(2, Math.floor(actualGridSize * 0.15 / targetCount));
+      const targetOccurrences = Math.max(2, Math.floor(totalCells * 0.15 / targetCount));
 
       // Generate target positions - each target icon appears multiple times
       const targetPositions = [];
@@ -344,7 +343,7 @@ const questionGenerators = {
           let pos;
           let attempts = 0;
           do {
-            pos = Math.floor(Math.random() * actualGridSize);
+            pos = Math.floor(Math.random() * totalCells);
             attempts++;
           } while (usedPositions.has(pos) && attempts < 100);
           if (!usedPositions.has(pos)) {
@@ -356,7 +355,7 @@ const questionGenerators = {
 
       // Build the grid
       const grid = [];
-      for (let i = 0; i < actualGridSize; i++) {
+      for (let i = 0; i < totalCells; i++) {
         if (usedPositions.has(i)) {
           // Find which target this position belongs to
           const targetIdx = Math.floor(targetPositions.indexOf(i) / targetOccurrences);
@@ -373,7 +372,7 @@ const questionGenerators = {
       }
 
       questions.push({
-        questionData: { grid, targetIcons, gridCols, symbolSet, targetTotal: targetPositions.length },
+        questionData: { grid, targetIcons, gridCols, gridRows, symbolSet, targetTotal: targetPositions.length },
         answerData: { targetPositions }
       });
     }

@@ -85,20 +85,20 @@ const ICON_POOL = SYMBOL_SETS.colorful;
 
 // Generate sample questions for preview (no backend needed)
 export function generatePreview(config = {}) {
-  const { symbolSet = 'arrows', gridSize = 36, targetCount = 1 } = config;
-  const gridCols = Math.ceil(Math.sqrt(gridSize));
+  const { symbolSet = 'arrows', gridCols = 6, gridRows = 8, targetCount = 1 } = config;
+  const totalCells = gridCols * gridRows;
 
   // Get symbols from the selected set (use only a small subset)
   const symbols = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
   const shuffledSymbols = [...symbols].sort(() => Math.random() - 0.5);
-  const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(gridSize / 6)));
+  const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(totalCells / 6)));
   const availableSymbols = shuffledSymbols.slice(0, uniqueSymbolCount);
 
   const targetIcons = availableSymbols.slice(0, targetCount);
   const fillerSymbols = availableSymbols.slice(targetCount);
 
   // Each target appears multiple times (~15% of grid)
-  const targetOccurrences = Math.max(2, Math.floor(gridSize * 0.15 / targetCount));
+  const targetOccurrences = Math.max(2, Math.floor(totalCells * 0.15 / targetCount));
 
   // Generate target positions
   const targetPositions = [];
@@ -109,7 +109,7 @@ export function generatePreview(config = {}) {
       let pos;
       let attempts = 0;
       do {
-        pos = Math.floor(Math.random() * gridSize);
+        pos = Math.floor(Math.random() * totalCells);
         attempts++;
       } while (usedPositions.has(pos) && attempts < 100);
       if (!usedPositions.has(pos)) {
@@ -121,7 +121,7 @@ export function generatePreview(config = {}) {
 
   // Build the grid
   const grid = [];
-  for (let i = 0; i < gridSize; i++) {
+  for (let i = 0; i < totalCells; i++) {
     if (usedPositions.has(i)) {
       const targetIdx = Math.floor(targetPositions.indexOf(i) / targetOccurrences);
       grid.push({ id: i, icon: targetIcons[Math.min(targetIdx, targetIcons.length - 1)], isTarget: true });
@@ -140,6 +140,7 @@ export function generatePreview(config = {}) {
       grid,
       targetIcons,
       gridCols,
+      gridRows,
       symbolSet,
       targetTotal: targetPositions.length
     },
@@ -161,7 +162,7 @@ export default function IconSearchChallenge({
 }) {
   const { t } = usePlayLanguage(language);
   const { questionData, answerData } = challenge;
-  const { grid, targetIcons, gridCols = 6, symbolSet = 'colorful', targetTotal } = questionData;
+  const { grid, targetIcons, gridCols = 6, gridRows = 8, symbolSet = 'colorful', targetTotal } = questionData;
   const { targetPositions } = answerData;
 
   // Check if using monochrome symbols (need different styling)
@@ -331,10 +332,11 @@ export default function IconSearchChallenge({
           style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+            gridTemplateRows: `repeat(${gridRows}, 1fr)`,
             gap: '4px',
             width: '100%',
-            maxWidth: '500px',
-            aspectRatio: '1',
+            maxWidth: '400px',
+            height: '100%',
             maxHeight: '100%',
           }}
         >
