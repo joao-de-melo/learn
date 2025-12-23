@@ -263,8 +263,6 @@ export default function IconSearchChallenge({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        minHeight: '60vh',
-        maxHeight: '85vh',
         padding: '12px',
         boxSizing: 'border-box',
         alignItems: 'stretch',

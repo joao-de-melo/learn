@@ -2260,12 +2260,21 @@ body {
   }
 }
 
-/* Icon Search Challenge - Override game-mode constraints */
+/* Icon Search Challenge - Override game-mode constraints for full screen usage */
 .game-mode .icon-search-challenge {
   align-items: stretch !important;
   justify-content: flex-start !important;
-  max-width: 100% !important;
+  max-width: none !important;
   width: 100% !important;
+  height: 100% !important;
+  max-height: calc(100vh - 120px) !important;
+}
+
+@media (min-width: 768px) {
+  .game-mode .play-content:has(.icon-search-challenge) {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 /* Selected Challenges List - Reorderable */
