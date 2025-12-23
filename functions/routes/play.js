@@ -794,6 +794,12 @@ router.post('/:token/complete', async (req, res) => {
 });
 
 function checkAnswer(answer, answerData) {
+  // For challenges where frontend already validated (icon_search, memory_match, sequence_recall)
+  // The answer is 0 (incorrect) or 1 (correct) - trust the frontend validation
+  if (answerData.correct === undefined) {
+    return answer === 1 || answer === true;
+  }
+
   if (typeof answerData.correct === 'number') {
     return parseInt(answer) === answerData.correct;
   }
