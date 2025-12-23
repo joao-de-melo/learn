@@ -85,7 +85,7 @@ const CHALLENGE_CONFIGS = {
     ]
   },
   icon_search: {
-    defaults: { gridSize: 36, targetCount: 2, symbolSet: 'colorful', questionCount: 5 },
+    defaults: { gridSize: 36, targetCount: 1, symbolSet: 'arrows', questionCount: 5 },
     fields: [
       { key: 'symbolSet', labelKey: 'symbolSet', type: 'select', options: [
         { value: 'colorful', labelKey: 'symbolSetColorful' },

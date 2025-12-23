@@ -235,7 +235,7 @@ const questionGenerators = {
   },
 
   icon_search: (config) => {
-    const { gridSize = 36, targetCount = 2, questionCount = 5, symbolSet = 'colorful' } = config;
+    const { gridSize = 36, targetCount = 1, questionCount = 5, symbolSet = 'colorful' } = config;
     // Calculate grid columns based on size
     const gridCols = Math.ceil(Math.sqrt(gridSize));
     const actualGridSize = gridCols * gridCols;
@@ -319,40 +319,61 @@ const questionGenerators = {
     // Get the symbol pool for this config
     const symbolPool = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
 
+    // Use only a small subset of symbols (5-8 different ones)
+    const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(actualGridSize / 6)));
+
     const questions = [];
     for (let q = 0; q < questionCount; q++) {
-      // Shuffle symbols and pick targets and fillers
+      // Shuffle and pick a small set of symbols for this question
       const shuffledSymbols = [...symbolPool].sort(() => Math.random() - 0.5);
-      const targetIcons = shuffledSymbols.slice(0, targetCount);
-      const fillerIcons = shuffledSymbols.slice(targetCount, targetCount + 15);
+      const availableSymbols = shuffledSymbols.slice(0, uniqueSymbolCount);
 
-      // Generate random target positions
+      // Pick target icon(s) - these will appear multiple times
+      const targetIcons = availableSymbols.slice(0, targetCount);
+      const fillerSymbols = availableSymbols.slice(targetCount);
+
+      // Calculate how many times each target should appear (roughly 10-20% of grid)
+      const targetOccurrences = Math.max(2, Math.floor(actualGridSize * 0.15 / targetCount));
+
+      // Generate target positions - each target icon appears multiple times
       const targetPositions = [];
-      for (let i = 0; i < targetCount; i++) {
-        let pos;
-        do {
-          pos = Math.floor(Math.random() * actualGridSize);
-        } while (targetPositions.includes(pos));
-        targetPositions.push(pos);
+      const usedPositions = new Set();
+
+      for (let t = 0; t < targetCount; t++) {
+        for (let i = 0; i < targetOccurrences; i++) {
+          let pos;
+          let attempts = 0;
+          do {
+            pos = Math.floor(Math.random() * actualGridSize);
+            attempts++;
+          } while (usedPositions.has(pos) && attempts < 100);
+          if (!usedPositions.has(pos)) {
+            usedPositions.add(pos);
+            targetPositions.push(pos);
+          }
+        }
       }
 
       // Build the grid
       const grid = [];
       for (let i = 0; i < actualGridSize; i++) {
-        const targetIndex = targetPositions.indexOf(i);
-        if (targetIndex !== -1) {
-          grid.push({ id: i, icon: targetIcons[targetIndex], isTarget: true });
+        if (usedPositions.has(i)) {
+          // Find which target this position belongs to
+          const targetIdx = Math.floor(targetPositions.indexOf(i) / targetOccurrences);
+          const targetIcon = targetIcons[Math.min(targetIdx, targetIcons.length - 1)];
+          grid.push({ id: i, icon: targetIcon, isTarget: true });
         } else {
+          // Fill with random filler symbol
           grid.push({
             id: i,
-            icon: fillerIcons[Math.floor(Math.random() * fillerIcons.length)],
+            icon: fillerSymbols[Math.floor(Math.random() * fillerSymbols.length)],
             isTarget: false
           });
         }
       }
 
       questions.push({
-        questionData: { grid, targetIcons, gridCols, symbolSet },
+        questionData: { grid, targetIcons, gridCols, symbolSet, targetTotal: targetPositions.length },
         answerData: { targetPositions }
       });
     }

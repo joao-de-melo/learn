@@ -85,37 +85,50 @@ const ICON_POOL = SYMBOL_SETS.colorful;
 
 // Generate sample questions for preview (no backend needed)
 export function generatePreview(config = {}) {
-  const { symbolSet = 'arrows', gridSize = 36, targetCount = 2 } = config;
+  const { symbolSet = 'arrows', gridSize = 36, targetCount = 1 } = config;
   const gridCols = Math.ceil(Math.sqrt(gridSize));
 
-  // Get symbols from the selected set
+  // Get symbols from the selected set (use only a small subset)
   const symbols = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
   const shuffledSymbols = [...symbols].sort(() => Math.random() - 0.5);
-  const targetIcons = shuffledSymbols.slice(0, targetCount);
-  const fillerIcons = shuffledSymbols.slice(targetCount, targetCount + 15);
+  const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(gridSize / 6)));
+  const availableSymbols = shuffledSymbols.slice(0, uniqueSymbolCount);
 
-  // Create grid with targets placed randomly
-  const grid = [];
+  const targetIcons = availableSymbols.slice(0, targetCount);
+  const fillerSymbols = availableSymbols.slice(targetCount);
+
+  // Each target appears multiple times (~15% of grid)
+  const targetOccurrences = Math.max(2, Math.floor(gridSize * 0.15 / targetCount));
+
+  // Generate target positions
   const targetPositions = [];
+  const usedPositions = new Set();
 
-  // Place targets first
-  for (let i = 0; i < targetCount; i++) {
-    let pos;
-    do {
-      pos = Math.floor(Math.random() * gridSize);
-    } while (targetPositions.includes(pos));
-    targetPositions.push(pos);
+  for (let t = 0; t < targetCount; t++) {
+    for (let i = 0; i < targetOccurrences; i++) {
+      let pos;
+      let attempts = 0;
+      do {
+        pos = Math.floor(Math.random() * gridSize);
+        attempts++;
+      } while (usedPositions.has(pos) && attempts < 100);
+      if (!usedPositions.has(pos)) {
+        usedPositions.add(pos);
+        targetPositions.push(pos);
+      }
+    }
   }
 
-  // Fill the grid
+  // Build the grid
+  const grid = [];
   for (let i = 0; i < gridSize; i++) {
-    const targetIndex = targetPositions.indexOf(i);
-    if (targetIndex !== -1) {
-      grid.push({ id: i, icon: targetIcons[targetIndex], isTarget: true });
+    if (usedPositions.has(i)) {
+      const targetIdx = Math.floor(targetPositions.indexOf(i) / targetOccurrences);
+      grid.push({ id: i, icon: targetIcons[Math.min(targetIdx, targetIcons.length - 1)], isTarget: true });
     } else {
       grid.push({
         id: i,
-        icon: fillerIcons[Math.floor(Math.random() * fillerIcons.length)],
+        icon: fillerSymbols[Math.floor(Math.random() * fillerSymbols.length)],
         isTarget: false
       });
     }
@@ -127,7 +140,8 @@ export function generatePreview(config = {}) {
       grid,
       targetIcons,
       gridCols,
-      symbolSet
+      symbolSet,
+      targetTotal: targetPositions.length
     },
     answerData: {
       targetPositions
@@ -147,11 +161,14 @@ export default function IconSearchChallenge({
 }) {
   const { t } = usePlayLanguage(language);
   const { questionData, answerData } = challenge;
-  const { grid, targetIcons, gridCols = 6, symbolSet = 'colorful' } = questionData;
+  const { grid, targetIcons, gridCols = 6, symbolSet = 'colorful', targetTotal } = questionData;
   const { targetPositions } = answerData;
 
   // Check if using monochrome symbols (need different styling)
   const isMonochrome = symbolSet !== 'colorful';
+
+  // Total targets to find (use targetTotal from backend or count from positions)
+  const totalTargets = targetTotal || targetPositions.length;
 
   const [selectedPositions, setSelectedPositions] = useState([]);
   const [showingHelp, setShowingHelp] = useState(showHelpOnStart && !isPreview);
@@ -191,11 +208,8 @@ export default function IconSearchChallenge({
         // Deselect if already selected
         return prev.filter(id => id !== cellId);
       } else {
-        // Select if under target count
-        if (prev.length < targetIcons.length) {
-          return [...prev, cellId];
-        }
-        return prev;
+        // Allow selecting any cell (no limit)
+        return [...prev, cellId];
       }
     });
   };
@@ -203,12 +217,16 @@ export default function IconSearchChallenge({
   const handleSubmit = () => {
     if (isPreview || submitted) return;
 
-    // Check if all selected positions are targets
-    const sortedSelected = [...selectedPositions].sort((a, b) => a - b);
-    const sortedTargets = [...targetPositions].sort((a, b) => a - b);
+    // Check if all targets were found and no wrong selections
+    const targetSet = new Set(targetPositions);
+    const selectedSet = new Set(selectedPositions);
 
-    const correct = sortedSelected.length === sortedTargets.length &&
-      sortedSelected.every((pos, idx) => pos === sortedTargets[idx]);
+    // All selected must be targets (no wrong selections)
+    const allSelectedAreTargets = selectedPositions.every(pos => targetSet.has(pos));
+    // All targets must be selected
+    const allTargetsFound = targetPositions.every(pos => selectedSet.has(pos));
+
+    const correct = allSelectedAreTargets && allTargetsFound;
 
     setIsCorrect(correct);
     setSubmitted(true);
@@ -229,17 +247,12 @@ export default function IconSearchChallenge({
   const helpText = t(helpKey);
   const hasHelp = helpText && helpText !== helpKey;
 
-  // Calculate if can submit
-  const canSubmit = selectedPositions.length === targetIcons.length;
+  // Can submit as long as at least 1 is selected
+  const canSubmit = selectedPositions.length >= 1;
 
-  // Memoize the target icons display to show which ones have been found
-  const targetStatus = useMemo(() => {
-    return targetIcons.map((icon, idx) => {
-      const targetPos = targetPositions[idx];
-      const isFound = selectedPositions.includes(targetPos);
-      return { icon, isFound };
-    });
-  }, [targetIcons, targetPositions, selectedPositions]);
+  // Count how many correct targets are selected
+  const correctlySelected = selectedPositions.filter(pos => targetPositions.includes(pos)).length;
+
 
   return (
     <div className={`challenge-display icon-search-challenge ${submitted ? (isCorrect ? 'result-correct' : 'result-incorrect') : ''} ${showingHelp ? 'showing-help' : ''}`}
@@ -271,42 +284,37 @@ export default function IconSearchChallenge({
           fontWeight: 'bold',
           fontSize: '14px',
         }}>
-          {t('findTheseIcons')}:
+          {t('findAll')}:
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
-          {targetStatus.map((target, idx) => (
+          {targetIcons.map((icon, idx) => (
             <div
               key={idx}
               style={{
-                fontSize: isMonochrome ? '24px' : '28px',
+                fontSize: isMonochrome ? '28px' : '32px',
                 fontFamily: isMonochrome ? 'monospace, sans-serif' : 'inherit',
                 fontWeight: isMonochrome ? 'bold' : 'normal',
                 background: 'white',
                 borderRadius: '8px',
-                padding: isMonochrome ? '6px 10px' : '4px 8px',
-                minWidth: isMonochrome ? '40px' : 'auto',
+                padding: isMonochrome ? '6px 12px' : '4px 10px',
+                minWidth: isMonochrome ? '44px' : 'auto',
                 textAlign: 'center',
-                opacity: target.isFound ? 0.5 : 1,
-                textDecoration: target.isFound ? 'line-through' : 'none',
-                transition: 'all 0.3s ease',
                 color: '#1f2937',
               }}
             >
-              {target.icon}
-              {target.isFound && (
-                <span style={{ marginLeft: '4px', fontSize: '16px', color: '#10b981' }}>✓</span>
-              )}
+              {icon}
             </div>
           ))}
         </div>
         <span style={{
           color: 'white',
           fontSize: '14px',
-          background: 'rgba(255,255,255,0.2)',
+          background: correctlySelected === totalTargets ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.2)',
           padding: '4px 8px',
           borderRadius: '8px',
+          transition: 'all 0.3s ease',
         }}>
-          {selectedPositions.length}/{targetIcons.length}
+          {correctlySelected}/{totalTargets}
         </span>
       </div>
 
@@ -404,7 +412,7 @@ export default function IconSearchChallenge({
               boxShadow: canSubmit ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none',
             }}
           >
-            {canSubmit ? t('submitAnswer') : `${t('select')} ${targetIcons.length - selectedPositions.length} ${t('more')}`}
+            {t('submitAnswer')}
           </button>
         </div>
       )}
