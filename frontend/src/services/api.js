@@ -3,7 +3,7 @@ import { auth } from '../config/firebase';
 // Local: Use hosting emulator which rewrites /api/** to functions emulator
 // Production: Use relative path (same origin, Firebase Hosting rewrites to functions)
 const useEmulators = process.env.REACT_APP_USE_EMULATORS === 'true';
-const API_URL = useEmulators ? 'http://localhost:5000/api' : '/api';
+const API_URL = useEmulators ? 'http://127.0.0.1:5001/learn-made-fun/europe-west2/api/api' : '/api';
 
 class ApiService {
   async getToken() {

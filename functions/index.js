@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onRequest } = require('firebase-functions/v2/https');
 const express = require('express');
 const cors = require('cors');
 
@@ -29,5 +29,5 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Export as Firebase Function
-exports.api = functions.https.onRequest(app);
+// Export as Firebase Function (v2) - deployed to London
+exports.api = onRequest({ region: 'europe-west2' }, app);

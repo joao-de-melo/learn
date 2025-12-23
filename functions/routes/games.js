@@ -94,7 +94,7 @@ router.get('/:id', async (req, res) => {
 // Create game
 router.post('/', async (req, res) => {
   try {
-    const { name, description, challenges, language } = req.body;
+    const { name, description, challenges, language, helpEnabled, voiceEnabled } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
@@ -109,6 +109,8 @@ router.post('/', async (req, res) => {
       name,
       description: description || null,
       language: language || 'pt', // Default to Portuguese
+      helpEnabled: helpEnabled || false,
+      voiceEnabled: voiceEnabled || false,
       challenges: challenges || [],
       createdAt: new Date(),
       updatedAt: new Date()
@@ -125,7 +127,7 @@ router.post('/', async (req, res) => {
 // Update game
 router.put('/:id', async (req, res) => {
   try {
-    const { name, description, challenges, language } = req.body;
+    const { name, description, challenges, language, helpEnabled, voiceEnabled } = req.body;
     const docRef = db.collection('games').doc(req.params.id);
     const doc = await docRef.get();
 
@@ -138,6 +140,8 @@ router.put('/:id', async (req, res) => {
     if (description !== undefined) updates.description = description;
     if (challenges !== undefined) updates.challenges = challenges;
     if (language !== undefined) updates.language = language;
+    if (helpEnabled !== undefined) updates.helpEnabled = helpEnabled;
+    if (voiceEnabled !== undefined) updates.voiceEnabled = voiceEnabled;
 
     await docRef.update(updates);
     const updated = await docRef.get();

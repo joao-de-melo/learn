@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import ChallengeRenderer from '../challenges';
+import ChallengeRenderer, { generatePreviewQuestions } from '../challenges';
 
 export default function ChallengePreview({ challengeTypeId, categories, onClose }) {
   const [preview, setPreview] = useState(null);
@@ -26,28 +26,43 @@ export default function ChallengePreview({ challengeTypeId, categories, onClose 
       return;
     }
 
-    // Get sample questions from the first level
+    // Get sample questions from the first level (if available)
     const levels = challengeType.levels || [];
-    if (levels.length === 0) {
-      setError('No levels available for this challenge');
-      setLoading(false);
-      return;
-    }
 
-    // Fetch preview from first level
-    api.getLevelPreview(levels[0].id)
-      .then(levelPreview => {
-        setPreview({
-          name: challengeType.name,
-          description: challengeType.description,
-          categoryName: category.name,
-          levelCount: levels.length,
-          totalQuestions: levels.reduce((sum, l) => sum + (l.questions || []).length, 0),
-          previewQuestions: levelPreview.previewQuestions || []
-        });
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+    if (levels.length > 0) {
+      // Fetch preview from first level
+      api.getLevelPreview(levels[0].id)
+        .then(levelPreview => {
+          setPreview({
+            name: challengeType.name,
+            description: challengeType.description,
+            categoryName: category.name,
+            levelCount: levels.length,
+            totalQuestions: levels.reduce((sum, l) => sum + (l.questions || []).length, 0),
+            previewQuestions: levelPreview.previewQuestions || []
+          });
+        })
+        .catch(err => setError(err.message))
+        .finally(() => setLoading(false));
+    } else {
+      // No levels available - use client-side preview generator
+      const previewQuestions = generatePreviewQuestions(challengeTypeId);
+      if (previewQuestions.length === 0) {
+        setError('Preview not available for this challenge');
+        setLoading(false);
+        return;
+      }
+
+      setPreview({
+        name: challengeType.name,
+        description: challengeType.description,
+        categoryName: category.name,
+        levelCount: 0,
+        totalQuestions: 0,
+        previewQuestions
+      });
+      setLoading(false);
+    }
   }, [challengeTypeId, categories]);
 
   if (loading) {
@@ -78,10 +93,14 @@ export default function ChallengePreview({ challengeTypeId, categories, onClose 
         <p style={{ color: '#6b7280', marginBottom: '8px' }}>{preview.description}</p>
         <div className="level-meta" style={{ marginBottom: '20px' }}>
           <span>{preview.categoryName}</span>
-          <span>|</span>
-          <span>{preview.levelCount} difficulty levels</span>
-          <span>|</span>
-          <span>{preview.totalQuestions} questions available</span>
+          {preview.levelCount > 0 && (
+            <>
+              <span>|</span>
+              <span>{preview.levelCount} difficulty levels</span>
+              <span>|</span>
+              <span>{preview.totalQuestions} questions available</span>
+            </>
+          )}
         </div>
 
         <div className="preview-container">

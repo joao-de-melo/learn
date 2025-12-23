@@ -4,6 +4,20 @@ import { getIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'pattern';
 
+// Generate sample questions for preview (no backend needed)
+export function generatePreview() {
+  const samples = [
+    { pattern: ['star', 'heart', 'star', 'heart'], correct: 'star', options: ['star', 'heart', 'sun', 'moon'] },
+    { pattern: ['apple', 'apple', 'banana', 'apple', 'apple'], correct: 'banana', options: ['apple', 'banana', 'cherry', 'grape'] },
+  ];
+
+  return samples.map(({ pattern, correct, options }) => ({
+    question_type: challengeType,
+    questionData: { pattern },
+    answerData: { correct, options },
+  }));
+}
+
 function PatternRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
   const { questionData, answerData } = challenge;
 
@@ -37,9 +51,28 @@ function PatternRenderer({ challenge, selectedAnswer, result, isDisabled, onSele
   );
 }
 
-export default function PatternChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
+export default function PatternChallenge({
+  challenge,
+  onAnswer,
+  onComplete,
+  isPreview,
+  language,
+  voiceEnabled = false,
+  showHelpOnStart = false,
+  challengeName
+}) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
+    <BaseChallenge
+      challenge={challenge}
+      onAnswer={onAnswer}
+      onComplete={onComplete}
+      isPreview={isPreview}
+      language={language}
+      voiceEnabled={voiceEnabled}
+      showHelpOnStart={showHelpOnStart}
+      challengeTypeId={challengeType}
+      challengeName={challengeName}
+    >
       {(props) => <PatternRenderer {...props} />}
     </BaseChallenge>
   );

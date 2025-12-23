@@ -1296,7 +1296,17 @@ body {
 }
 
 .game-mode .target-number {
-  font-size: clamp(48px, 12vw, 80px);
+  font-size: clamp(100px, 25vw, 180px);
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.game-mode .challenge-instruction {
+  font-size: clamp(14px, 3vw, 18px);
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .game-mode .visual-group {
@@ -1736,5 +1746,643 @@ body {
   .intro-start-btn {
     font-size: 20px !important;
     padding: 16px 48px !important;
+  }
+}
+
+/* Challenge Help Overlay (shown above challenge when voice is enabled) */
+.challenge-display.showing-help {
+  position: relative;
+}
+
+.challenge-display.showing-help .answer-btn {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.help-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 40px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  max-width: 90%;
+  max-height: 80vh;
+}
+
+.help-instruction {
+  font-size: 20px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.help-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 22px !important;
+  padding: 16px 48px !important;
+  border-radius: 50px !important;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+}
+
+.help-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.5);
+}
+
+.help-start-btn:active {
+  transform: translateY(0);
+}
+
+.help-start-btn.speaking {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(34, 197, 94, 0.7);
+  }
+}
+
+.btn-play-icon {
+  font-size: 18px;
+}
+
+.help-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.help-listen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 22px !important;
+  padding: 16px 48px !important;
+  border-radius: 50px !important;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+}
+
+.help-listen-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.5);
+}
+
+.help-listen-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.help-listen-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.help-listen-btn.speaking {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@media (max-width: 600px) {
+  .help-overlay-content {
+    padding: 24px 20px;
+    margin: 16px;
+  }
+
+  .help-instruction {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .help-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .help-start-btn,
+  .help-listen-btn {
+    font-size: 18px !important;
+    padding: 14px 36px !important;
+    width: 100%;
+  }
+}
+
+/* Legal pages (Privacy Policy, Terms of Service) */
+.legal-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.legal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.legal-card h1 {
+  font-size: 32px;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.legal-date {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.legal-card section {
+  margin-bottom: 32px;
+}
+
+.legal-card h2 {
+  font-size: 20px;
+  color: #374151;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.legal-card h3 {
+  font-size: 16px;
+  color: #4b5563;
+  margin: 16px 0 12px;
+}
+
+.legal-card p {
+  color: #4b5563;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.legal-card ul {
+  margin: 12px 0;
+  padding-left: 24px;
+  color: #4b5563;
+}
+
+.legal-card li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.legal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 24px;
+  margin-top: 32px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.legal-footer a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.legal-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .legal-container {
+    padding: 20px 12px;
+  }
+
+  .legal-card {
+    padding: 24px 20px;
+  }
+
+  .legal-card h1 {
+    font-size: 24px;
+  }
+
+  .legal-card h2 {
+    font-size: 18px;
+  }
+
+  .legal-footer {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}
+
+/* Game Detail Page */
+.game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.game-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.game-info-main {
+  flex: 1;
+}
+
+.game-description {
+  color: #4b5563;
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.game-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.game-setting {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.game-setting strong {
+  color: #374151;
+  font-weight: 500;
+}
+
+.game-stats {
+  display: flex;
+  gap: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.game-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.game-stat-label {
+  font-size: 13px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Game Edit Form */
+.game-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-group textarea.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.form-group textarea.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group select.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+}
+
+.form-group select.form-control:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.checkbox-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.checkbox-label small {
+  width: 100%;
+  color: #6b7280;
+  font-size: 13px;
+  margin-left: 26px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .game-stats {
+    justify-content: space-around;
+  }
+
+  .game-info-header {
+    flex-direction: column;
+  }
+
+  .game-info-header .btn {
+    align-self: flex-start;
+  }
+}
+
+/* Voice Challenge - Play Voice Button */
+.voice-challenge-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.play-voice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 40px;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.play-voice-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.5);
+}
+
+.play-voice-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.play-voice-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.play-voice-btn.playing {
+  animation: pulse-voice 1.5s ease-in-out infinite;
+}
+
+.play-voice-btn .play-icon {
+  font-size: 32px;
+}
+
+.play-voice-btn .play-text {
+  font-size: 20px;
+}
+
+@keyframes pulse-voice {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.6);
+    transform: scale(1.02);
+  }
+}
+
+/* Game mode adjustments for voice challenge */
+.game-mode .play-voice-btn {
+  padding: clamp(16px, 4vw, 24px) clamp(32px, 8vw, 48px);
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.game-mode .play-voice-btn .play-icon {
+  font-size: clamp(28px, 7vw, 40px);
+}
+
+.game-mode .play-voice-btn .play-text {
+  font-size: clamp(16px, 4vw, 22px);
+}
+
+@media (max-width: 480px) {
+  .play-voice-btn {
+    padding: 16px 32px;
+  }
+
+  .play-voice-btn .play-icon {
+    font-size: 28px;
+  }
+
+  .play-voice-btn .play-text {
+    font-size: 16px;
+  }
+}
+
+/* Selected Challenges List - Reorderable */
+.selected-challenges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-challenge-item {
+  display: flex;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.selected-challenge-item:hover {
+  border-color: #d1d5db;
+}
+
+.selected-challenge-item.dragging {
+  opacity: 0.5;
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.challenge-order-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #e5e7eb;
+  gap: 8px;
+  min-width: 60px;
+}
+
+.drag-handle {
+  cursor: grab;
+  font-size: 20px;
+  color: #9ca3af;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.challenge-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+  background: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: auto;
+  line-height: 1;
+}
+
+.challenge-content {
+  flex: 1;
+  padding: 16px;
+}
+
+.selected-challenge-item .challenge-header {
+  margin-bottom: 0;
+}
+
+.selected-challenge-item .challenge-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.selected-challenge-item .challenge-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.selected-challenge-item .challenge-config {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Available challenges when some are selected */
+.level-item.selected {
+  opacity: 0.6;
+  background: #f3f4f6;
+}
+
+@media (max-width: 600px) {
+  .selected-challenge-item {
+    flex-direction: column;
+  }
+
+  .challenge-order-controls {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 12px;
+    min-width: auto;
+  }
+
+  .order-buttons {
+    flex-direction: row;
+  }
+
+  .challenge-content {
+    padding: 12px;
   }
 }

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import ChallengeRenderer from '../challenges';
-import ChallengeIntro from '../components/ChallengeIntro';
 import { usePlayLanguage } from '../i18n';
 import voiceService from '../services/voiceService';
 
@@ -29,8 +28,9 @@ export default function Play() {
   // Track wrong answers in current challenge to repeat if needed
   const [hadWrongAnswer, setHadWrongAnswer] = useState(false);
 
-  // Show intro page before challenge starts (only when voice is enabled and it's a new challenge)
-  const [showIntro, setShowIntro] = useState(false);
+  // Show help page before challenge starts (only when voice is enabled and it's a new challenge)
+  // This is now handled within the challenge component itself
+  const [showHelpOnStart, setShowHelpOnStart] = useState(false);
 
   // Get translations based on game language
   const { t } = usePlayLanguage(gameData?.language);
@@ -53,9 +53,9 @@ export default function Play() {
         setCurrentQuestionIndex(0);
         setHadWrongAnswer(false);
 
-        // Show intro page if voice is enabled
-        if (data.voiceEnabled) {
-          setShowIntro(true);
+        // Show help page if help is enabled (now handled within the challenge)
+        if (data.helpEnabled) {
+          setShowHelpOnStart(true);
         }
       }
     } catch (err) {
@@ -72,18 +72,11 @@ export default function Play() {
       setCurrentQuestionIndex(0);
       setHadWrongAnswer(false);
 
-      // Show intro page for new challenges when voice is enabled
-      if (isNewChallenge && gameData?.voiceEnabled) {
-        setShowIntro(true);
-      }
+      // Show help page for new challenges when help is enabled (now handled within the challenge)
+      setShowHelpOnStart(isNewChallenge && gameData?.helpEnabled);
     } catch (err) {
       setError(err.message);
     }
-  };
-
-  // Called when user clicks "Start" on the intro page
-  const handleStartChallenge = () => {
-    setShowIntro(false);
   };
 
   const handleAnswer = async (answer) => {
@@ -216,20 +209,6 @@ export default function Play() {
   }
 
   const currentChallenge = gameData.challenges[currentChallengeIndex];
-
-  // Show intro page before challenge starts (only when voice is enabled)
-  if (showIntro) {
-    return (
-      <div className="play-container game-mode">
-        <ChallengeIntro
-          challengeTypeId={currentChallenge.challengeTypeId}
-          challengeName={currentChallenge.name}
-          language={gameData.language}
-          onStart={handleStartChallenge}
-        />
-      </div>
-    );
-  }
   const question = challengeData.questions[currentQuestionIndex];
 
   if (!question) {
@@ -253,7 +232,7 @@ export default function Play() {
           <span className="name">{gameData.kidName}</span>
         </div>
         <div className="challenge-info">
-          <span className="challenge-name">{currentChallenge.name}</span>
+          <span className="challenge-name">{t(`challenge_${currentChallenge.renderer}`)}</span>
         </div>
       </div>
 
@@ -273,6 +252,9 @@ export default function Play() {
           language={gameData.language}
           onAnswer={handleAnswer}
           onComplete={handleQuestionComplete}
+          voiceEnabled={gameData.voiceEnabled}
+          showHelpOnStart={showHelpOnStart && currentQuestionIndex === 0}
+          challengeName={currentChallenge.name}
         />
       </div>
     </div>

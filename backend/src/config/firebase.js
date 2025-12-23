@@ -1,5 +1,11 @@
 const admin = require('firebase-admin');
-require('dotenv').config();
+const path = require('path');
+
+// Load environment-specific .env file
+const env = process.env.NODE_ENV || 'local';
+require('dotenv').config({
+  path: path.resolve(__dirname, `../../.env.${env}`)
+});
 
 // Initialize Firebase Admin
 // For local development with emulator, set FIRESTORE_EMULATOR_HOST
@@ -27,6 +33,12 @@ if (process.env.FIRESTORE_EMULATOR_HOST) {
   admin.initializeApp();
 }
 
-const db = admin.firestore();
+const { getFirestore } = require('firebase-admin/firestore');
+
+// Database name: use default for emulator, 'learn-db' for production
+const isEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
+const databaseId = isEmulator ? '(default)' : (process.env.FIRESTORE_DATABASE_ID || 'learn-db');
+const db = getFirestore(databaseId);
+console.log('Using Firestore database:', databaseId);
 
 module.exports = { admin, db };

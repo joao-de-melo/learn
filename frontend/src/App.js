@@ -5,6 +5,8 @@ import { LanguageProvider } from './i18n';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Privacy from './pages/Privacy';
+import TermsOfService from './pages/TermsOfService';
 import Kids from './pages/Kids';
 import KidProfile from './pages/KidProfile';
 import Games from './pages/Games';
@@ -37,6 +39,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/kids" element={<PrivateRoute><Kids /></PrivateRoute>} />
       <Route path="/kids/:id" element={<PrivateRoute><KidProfile /></PrivateRoute>} />

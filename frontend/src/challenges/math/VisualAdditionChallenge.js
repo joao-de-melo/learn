@@ -4,6 +4,27 @@ import { IconDisplay, getRandomIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'visual_addition';
 
+// Generate sample questions for preview (no backend needed)
+export function generatePreview() {
+  const iconType = getRandomIcon();
+  const samples = [
+    { leftCount: 2, rightCount: 3, correct: 5 },
+    { leftCount: 1, rightCount: 4, correct: 5 },
+  ];
+
+  return samples.map(({ leftCount, rightCount, correct }) => {
+    const options = [correct - 1, correct, correct + 1, correct + 2].map(count => ({
+      value: count,
+      count,
+    }));
+    return {
+      question_type: challengeType,
+      questionData: { leftCount, rightCount, iconType },
+      answerData: { correct, options },
+    };
+  });
+}
+
 function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
   const { questionData, answerData } = challenge;
 
@@ -71,9 +92,28 @@ function VisualAdditionRenderer({ challenge, selectedAnswer, result, isDisabled,
   );
 }
 
-export default function VisualAdditionChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
+export default function VisualAdditionChallenge({
+  challenge,
+  onAnswer,
+  onComplete,
+  isPreview,
+  language,
+  voiceEnabled = false,
+  showHelpOnStart = false,
+  challengeName
+}) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
+    <BaseChallenge
+      challenge={challenge}
+      onAnswer={onAnswer}
+      onComplete={onComplete}
+      isPreview={isPreview}
+      language={language}
+      voiceEnabled={voiceEnabled}
+      showHelpOnStart={showHelpOnStart}
+      challengeTypeId={challengeType}
+      challengeName={challengeName}
+    >
       {(props) => <VisualAdditionRenderer {...props} />}
     </BaseChallenge>
   );

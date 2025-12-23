@@ -4,6 +4,21 @@ import { IconDisplay, getRandomIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'visual_subtraction';
 
+// Generate sample questions for preview (no backend needed)
+export function generatePreview() {
+  const iconType = getRandomIcon();
+  const samples = [
+    { startCount: 5, removeCount: 2, correct: 3 },
+    { startCount: 4, removeCount: 1, correct: 3 },
+  ];
+
+  return samples.map(({ startCount, removeCount, correct }) => ({
+    question_type: challengeType,
+    questionData: { startCount, removeCount, iconType },
+    answerData: { correct, options: [correct - 1, correct, correct + 1, correct + 2] },
+  }));
+}
+
 function VisualSubtractionRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
   const { questionData, answerData } = challenge;
 
@@ -52,9 +67,28 @@ function VisualSubtractionRenderer({ challenge, selectedAnswer, result, isDisabl
   );
 }
 
-export default function VisualSubtractionChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
+export default function VisualSubtractionChallenge({
+  challenge,
+  onAnswer,
+  onComplete,
+  isPreview,
+  language,
+  voiceEnabled = false,
+  showHelpOnStart = false,
+  challengeName
+}) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
+    <BaseChallenge
+      challenge={challenge}
+      onAnswer={onAnswer}
+      onComplete={onComplete}
+      isPreview={isPreview}
+      language={language}
+      voiceEnabled={voiceEnabled}
+      showHelpOnStart={showHelpOnStart}
+      challengeTypeId={challengeType}
+      challengeName={challengeName}
+    >
       {(props) => <VisualSubtractionRenderer {...props} />}
     </BaseChallenge>
   );

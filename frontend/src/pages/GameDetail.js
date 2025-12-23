@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import GameEditor from '../components/GameEditor';
 import api from '../services/api';
 import { useLanguage } from '../i18n';
 
@@ -22,7 +23,8 @@ export default function GameDetail() {
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [error, setError] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active'); // 'active', 'completed', 'all'
+  const [statusFilter, setStatusFilter] = useState('active');
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -66,6 +68,12 @@ export default function GameDetail() {
     alert(t('playLinkCopied'));
   };
 
+  const handleSaveEdit = async (gameData) => {
+    await api.updateGame(id, gameData);
+    await loadData();
+    setIsEditing(false);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -85,14 +93,31 @@ export default function GameDetail() {
     );
   }
 
-  // All kids can be assigned (multiple assignments per kid allowed)
+  // Edit mode - show full game editor
+  if (isEditing) {
+    return (
+      <Layout>
+        <div className="page-header">
+          <h1>{t('editGame')}</h1>
+        </div>
+
+        <GameEditor
+          initialData={game}
+          onSave={handleSaveEdit}
+          onCancel={() => setIsEditing(false)}
+          saveButtonText={t('saveChanges')}
+        />
+      </Layout>
+    );
+  }
+
+  // View mode
   const totalQuestions = (game.challenges || []).reduce((sum, c) => sum + c.questionCount, 0);
 
-  // Filter assignments based on status filter
   const filteredAssignments = game.assignments.filter(a => {
     if (statusFilter === 'active') return a.isActive;
     if (statusFilter === 'completed') return !a.isActive && a.completedAt;
-    return true; // 'all'
+    return true;
   });
 
   const activeCount = game.assignments.filter(a => a.isActive).length;
@@ -100,41 +125,62 @@ export default function GameDetail() {
 
   return (
     <Layout>
+      {/* Header */}
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button className="btn btn-secondary" onClick={() => navigate('/games')}>
-            {t('back')}
-          </button>
-          <div>
-            <h1>{game.name}</h1>
-            {game.description && <p style={{ color: '#6b7280', margin: 0 }}>{game.description}</p>}
-          </div>
-        </div>
+        <button className="btn btn-secondary" onClick={() => navigate('/games')}>
+          {t('back')}
+        </button>
+        <h1>{game.name}</h1>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Game Stats */}
-      <div className="stats-grid" style={{ marginBottom: '32px' }}>
-        <div className="stat-card">
-          <div className="stat-value">{(game.challenges || []).length}</div>
-          <div className="stat-label">{t('challenges')}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{totalQuestions}</div>
-          <div className="stat-label">{t('totalQuestions')}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{game.assignments.length}</div>
-          <div className="stat-label">{t('kidsAssigned')}</div>
+      {/* Game Info Card */}
+      <div className="card" style={{ marginBottom: '32px' }}>
+        <div className="game-info">
+          <div className="game-info-header">
+            <div className="game-info-main">
+              {game.description && (
+                <p className="game-description">{game.description}</p>
+              )}
+              <div className="game-settings">
+                <span className="game-setting">
+                  <strong>{t('gameLanguage')}:</strong> {game.language === 'en' ? t('english') : t('portuguese')}
+                </span>
+                <span className="game-setting">
+                  <strong>{t('enableHelp')}:</strong> {game.helpEnabled ? t('yes') : t('no')}
+                </span>
+                {game.helpEnabled && (
+                  <span className="game-setting">
+                    <strong>{t('enableVoice')}:</strong> {game.voiceEnabled ? t('yes') : t('no')}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={() => setIsEditing(true)}>
+              {t('editGame')}
+            </button>
+          </div>
+
+          <div className="game-stats">
+            <div className="game-stat">
+              <span className="game-stat-value">{(game.challenges || []).length}</span>
+              <span className="game-stat-label">{t('challenges')}</span>
+            </div>
+            <div className="game-stat">
+              <span className="game-stat-value">{totalQuestions}</span>
+              <span className="game-stat-label">{t('questions')}</span>
+            </div>
+            <div className="game-stat">
+              <span className="game-stat-value">{game.assignments.length}</span>
+              <span className="game-stat-label">{t('assignments')}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Challenges Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h2 style={{ margin: 0 }}>{t('challenges')}</h2>
-      </div>
-
+      <h2 style={{ marginBottom: '16px' }}>{t('challenges')}</h2>
       {(game.challenges || []).length === 0 ? (
         <div className="card" style={{ marginBottom: '32px' }}>
           <p>{t('noChallengesInGame')}</p>
@@ -144,17 +190,19 @@ export default function GameDetail() {
           <table className="data-table">
             <thead>
               <tr>
+                <th style={{ width: '50px' }}>#</th>
                 <th>{t('challenge')}</th>
                 <th>{t('category')}</th>
                 <th>{t('questions')}</th>
               </tr>
             </thead>
             <tbody>
-              {(game.challenges || []).map(challenge => {
+              {(game.challenges || []).map((challenge, index) => {
                 const challengeKey = challenge.renderer || challenge.challengeTypeId;
                 const categoryKey = challenge.categoryId;
                 return (
                   <tr key={challenge.challengeTypeId}>
+                    <td style={{ fontWeight: 'bold', color: '#6b7280' }}>{index + 1}</td>
                     <td>
                       <strong>{t(`challenge_${challengeKey}`) || challenge.name}</strong>
                       <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
@@ -172,8 +220,8 @@ export default function GameDetail() {
       )}
 
       {/* Assignments Section */}
-      <h2 style={{ marginBottom: '16px' }}>{t('assignments')}</h2>
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h2 style={{ margin: 0 }}>{t('assignments')}</h2>
         <button className="btn btn-primary btn-sm" onClick={() => setShowAssignModal(true)}>
           + {t('assignToKid')}
         </button>

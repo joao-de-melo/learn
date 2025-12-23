@@ -65,6 +65,22 @@ const questionGenerators = {
     return questions;
   },
 
+  word_recognition: (config) => {
+    const { words = ['cat', 'dog', 'ball'], questionCount = 5 } = config;
+    // Default word pool if user hasn't specified any
+    const wordPool = words.length > 0 ? words : ['cat', 'dog', 'bird', 'fish', 'apple', 'banana', 'ball', 'star', 'sun', 'moon'];
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      const word = wordPool[Math.floor(Math.random() * wordPool.length)];
+      const options = getWordOptions(word, wordPool);
+      questions.push({
+        questionData: { word },
+        answerData: { correct: word, options }
+      });
+    }
+    return questions;
+  },
+
   pattern: (config) => {
     const { patternTypes = ['colors'], questionCount = 5 } = config;
     const patternItems = {
@@ -97,7 +113,7 @@ const questionGenerators = {
   },
 
   odd_one_out: (config) => {
-    const { categories = ['fruits', 'animals'], questionCount = 5 } = config;
+    const { categories = ['fruits', 'animals'], questionCount = 5, showLabels = false } = config;
     const categoryItems = {
       fruits: ['apple', 'banana', 'orange', 'grape', 'strawberry'],
       animals: ['cat', 'dog', 'bear', 'bird', 'fish'],
@@ -116,7 +132,7 @@ const questionGenerators = {
       questionItems[oddIndex] = oddItem;
 
       questions.push({
-        questionData: { items: questionItems, display: category },
+        questionData: { items: questionItems, display: category, showLabels },
         answerData: { correct: oddIndex, correctItem: oddItem }
       });
     }
@@ -125,20 +141,222 @@ const questionGenerators = {
 
   matching: (config) => {
     const { pairCount = 4, questionCount = 5 } = config;
-    // Placeholder - matching requires different UI
-    return [];
+    // Matching pairs: show one item, select its match
+    const matchPairs = {
+      animals: [
+        { item: '🐶', match: '🦴' },
+        { item: '🐱', match: '🐟' },
+        { item: '🐰', match: '🥕' },
+        { item: '🐦', match: '🪺' },
+        { item: '🐻', match: '🍯' },
+        { item: '🐭', match: '🧀' },
+      ],
+      colors: [
+        { item: '🔴', match: '❤️' },
+        { item: '🟡', match: '⭐' },
+        { item: '🟢', match: '🌲' },
+        { item: '🔵', match: '💎' },
+        { item: '🟠', match: '🍊' },
+        { item: '🟣', match: '🍇' },
+      ],
+      opposites: [
+        { item: '☀️', match: '🌙' },
+        { item: '🔥', match: '❄️' },
+        { item: '⬆️', match: '⬇️' },
+        { item: '😊', match: '😢' },
+        { item: '🌞', match: '🌧️' },
+      ],
+    };
+
+    // Combine all pairs
+    const allPairs = [...matchPairs.animals, ...matchPairs.colors, ...matchPairs.opposites];
+    const allMatches = allPairs.map(p => p.match);
+
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      const pair = allPairs[Math.floor(Math.random() * allPairs.length)];
+      // Generate options: correct match + 3 random wrong matches
+      const wrongMatches = allMatches.filter(m => m !== pair.match);
+      const options = [pair.match];
+      while (options.length < 4 && wrongMatches.length > 0) {
+        const idx = Math.floor(Math.random() * wrongMatches.length);
+        options.push(wrongMatches.splice(idx, 1)[0]);
+      }
+
+      questions.push({
+        questionData: { item: pair.item },
+        answerData: { correct: pair.match, options: shuffleArray(options) }
+      });
+    }
+    return questions;
   },
 
   memory_match: (config) => {
-    const { gridSize = 4, questionCount = 5 } = config;
-    // Placeholder - memory match requires different UI
-    return [];
+    const { gridSize = 4, questionCount = 1 } = config; // Memory match is one game per "question"
+    const MEMORY_ICONS = ['🐶', '🐱', '🐰', '🐻', '🦁', '🐸', '🐵', '🦊', '🐼', '🐨'];
+
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      const numPairs = Math.floor(gridSize / 2);
+      const icons = MEMORY_ICONS.slice(0, numPairs);
+      const cards = [...icons, ...icons]
+        .sort(() => Math.random() - 0.5)
+        .map((icon, index) => ({
+          id: index,
+          icon,
+        }));
+
+      questions.push({
+        questionData: { cards, gridSize },
+        answerData: { pairs: numPairs }
+      });
+    }
+    return questions;
   },
 
   sequence_recall: (config) => {
     const { maxLength = 4, questionCount = 5 } = config;
-    // Placeholder - sequence recall requires different UI
-    return [];
+    // Generate sequences of increasing length
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      // Start with 2 items and increase up to maxLength
+      const length = Math.min(2 + Math.floor(i / 2), maxLength);
+      const sequence = [];
+      for (let j = 0; j < length; j++) {
+        sequence.push(Math.floor(Math.random() * 4)); // 4 possible items (0-3)
+      }
+
+      questions.push({
+        questionData: { sequence, maxLength },
+        answerData: { sequence }
+      });
+    }
+    return questions;
+  },
+
+  icon_search: (config) => {
+    const { gridSize = 36, targetCount = 2, questionCount = 5, symbolSet = 'colorful' } = config;
+    // Calculate grid columns based on size
+    const gridCols = Math.ceil(Math.sqrt(gridSize));
+    const actualGridSize = gridCols * gridCols;
+
+    // Symbol sets - each contains visually similar symbols for discrimination
+    const SYMBOL_SETS = {
+      // Colorful distinct emojis (easy mode)
+      colorful: [
+        '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+        '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+        '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
+        '🐌', '🐞', '🐜', '🦟', '🦗', '🐢', '🐍', '🦎', '🦖', '🦕',
+        '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳',
+        '🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍒', '🍑', '🥭',
+        '⭐', '🌟', '💫', '✨', '⚡', '🔥', '💧', '🌈', '☀️', '🌙',
+        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💖', '💝'
+      ],
+
+      // Arrows pointing different directions (hard - very similar)
+      arrows: [
+        '↑', '↓', '←', '→', '↖', '↗', '↘', '↙',
+        '⬆', '⬇', '⬅', '➡', '↕', '↔',
+        '▲', '▼', '◀', '▶', '△', '▽', '◁', '▷',
+        '⇧', '⇩', '⇦', '⇨', '⇡', '⇣', '⇠', '⇢',
+        '↰', '↱', '↲', '↳', '↴', '↵',
+        '⤴', '⤵', '↩', '↪', '⤶', '⤷',
+        '➤', '➜', '➔', '➙', '➛', '➝', '➞', '➟',
+        '⇐', '⇑', '⇒', '⇓', '⇔', '⇕'
+      ],
+
+      // Circles and round shapes (hard - subtle differences)
+      circles: [
+        '○', '◯', '◎', '●', '◐', '◑', '◒', '◓',
+        '◔', '◕', '⊙', '⊚', '⊛', '⦿', '◌', '◍',
+        '◉', '⊕', '⊖', '⊗', '⊘', '⊜', '⊝',
+        '⬤', '⚫', '⚪', '🔴', '🔵', '⭕', '🔘',
+        '◦', '•', '∘', '°', '⁰', 'º',
+        'O', 'Q', 'G', 'C', 'D', '0', 'Ø', 'Θ',
+        '⊃', '⊂', '⊇', '⊆', '∩', '∪'
+      ],
+
+      // Similar letters and characters (hard - confusable)
+      letters: [
+        'O', 'Q', 'G', 'C', 'D', '0', 'Ø', 'Θ',
+        'I', 'l', '1', '|', '!', 'i', 'j', 'L',
+        'b', 'd', 'p', 'q', '6', '9',
+        'n', 'u', 'm', 'w', 'ω', 'ɯ',
+        'E', 'F', 'f', 't', 'T', '†', '‡',
+        'V', 'W', 'M', 'N', 'v', 'w',
+        'S', '5', '$', 's', 'Z', '2', 'z',
+        'A', '4', 'Λ', 'Δ', 'a', 'α',
+        'B', '8', 'ß', 'β', 'R', 'P',
+        'K', 'X', 'x', 'k', '×', '+', '*'
+      ],
+
+      // Geometric shapes (medium - similar but distinguishable)
+      shapes: [
+        '■', '□', '▢', '▣', '▤', '▥', '▦', '▧', '▨', '▩',
+        '◆', '◇', '◈', '⬥', '⬦', '⬧', '⬨',
+        '▲', '△', '▴', '▵', '▼', '▽', '▾', '▿',
+        '◀', '◁', '▶', '▷', '◂', '◃', '▸', '▹',
+        '★', '☆', '✦', '✧', '✩', '✪', '✫', '✬',
+        '♠', '♤', '♣', '♧', '♥', '♡', '♦', '♢',
+        '⬟', '⬡', '⬢', '⬣', '⎔', '⏣', '⏢',
+        '╳', '╋', '╬', '┼', '╪', '╫'
+      ],
+
+      // Math and technical symbols (hard)
+      math: [
+        '+', '×', '÷', '−', '±', '∓', '∗', '∙',
+        '=', '≠', '≈', '≡', '≢', '≃', '≄', '≅',
+        '<', '>', '≤', '≥', '≪', '≫', '≮', '≯',
+        '∧', '∨', '⊻', '⊼', '⊽', '∩', '∪',
+        '∈', '∉', '∋', '∌', '⊂', '⊃', '⊆', '⊇',
+        '∀', '∃', '∄', '∅', '∆', '∇', '∂', '∫',
+        '√', '∛', '∜', '∝', '∞', '∟', '∠', '∡',
+        'π', 'Σ', 'Π', 'Ω', 'μ', 'φ', 'ψ', 'λ'
+      ]
+    };
+
+    // Get the symbol pool for this config
+    const symbolPool = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
+
+    const questions = [];
+    for (let q = 0; q < questionCount; q++) {
+      // Shuffle symbols and pick targets and fillers
+      const shuffledSymbols = [...symbolPool].sort(() => Math.random() - 0.5);
+      const targetIcons = shuffledSymbols.slice(0, targetCount);
+      const fillerIcons = shuffledSymbols.slice(targetCount, targetCount + 15);
+
+      // Generate random target positions
+      const targetPositions = [];
+      for (let i = 0; i < targetCount; i++) {
+        let pos;
+        do {
+          pos = Math.floor(Math.random() * actualGridSize);
+        } while (targetPositions.includes(pos));
+        targetPositions.push(pos);
+      }
+
+      // Build the grid
+      const grid = [];
+      for (let i = 0; i < actualGridSize; i++) {
+        const targetIndex = targetPositions.indexOf(i);
+        if (targetIndex !== -1) {
+          grid.push({ id: i, icon: targetIcons[targetIndex], isTarget: true });
+        } else {
+          grid.push({
+            id: i,
+            icon: fillerIcons[Math.floor(Math.random() * fillerIcons.length)],
+            isTarget: false
+          });
+        }
+      }
+
+      questions.push({
+        questionData: { grid, targetIcons, gridCols, symbolSet },
+        answerData: { targetPositions }
+      });
+    }
+    return questions;
   },
 
   number_to_quantity: (config) => {
@@ -163,6 +381,51 @@ const questionGenerators = {
       questions.push({
         questionData: { targetNumber },
         answerData: { correct: targetNumber, options: shuffleArray(options) }
+      });
+    }
+    return questions;
+  },
+
+  voice_to_quantity: (config) => {
+    const { maxNumber = 5, questionCount = 5 } = config;
+    const countingIcons = ['star', 'bear', 'robot', 'heart', 'flower', 'apple', 'ball', 'car', 'fish', 'bird'];
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      const targetNumber = Math.floor(Math.random() * maxNumber) + 1;
+      const iconType = countingIcons[Math.floor(Math.random() * countingIcons.length)];
+
+      // Generate options with different quantities
+      const options = [];
+      options.push({ value: targetNumber, count: targetNumber });
+
+      // Add wrong options
+      let attempts = 0;
+      while (options.length < 3 && attempts < 20) {
+        const wrongCount = Math.floor(Math.random() * maxNumber) + 1;
+        if (!options.find(o => o.count === wrongCount)) {
+          options.push({ value: wrongCount, count: wrongCount });
+        }
+        attempts++;
+      }
+
+      questions.push({
+        questionData: { targetNumber, iconType },
+        answerData: { correct: targetNumber, options: shuffleArray(options) }
+      });
+    }
+    return questions;
+  },
+
+  voice_to_number: (config) => {
+    const { maxNumber = 10, questionCount = 5 } = config;
+    const questions = [];
+    for (let i = 0; i < questionCount; i++) {
+      const targetNumber = Math.floor(Math.random() * maxNumber) + 1;
+      const options = generateNumberOptions(targetNumber, maxNumber);
+
+      questions.push({
+        questionData: { targetNumber },
+        answerData: { correct: targetNumber, options }
       });
     }
     return questions;
@@ -197,6 +460,16 @@ function getLetterOptions(correct, pool) {
     options.push(available.splice(idx, 1)[0]);
   }
   return options.sort();
+}
+
+function getWordOptions(correct, pool) {
+  const options = [correct];
+  const available = pool.filter(w => w !== correct);
+  while (options.length < 4 && available.length > 0) {
+    const idx = Math.floor(Math.random() * available.length);
+    options.push(available.splice(idx, 1)[0]);
+  }
+  return shuffleArray(options);
 }
 
 function shuffleArray(array) {
@@ -276,6 +549,8 @@ router.get('/:token', async (req, res) => {
       gameName: game.name,
       gameDescription: game.description,
       language: game.language || 'pt',
+      helpEnabled: game.helpEnabled || false,
+      voiceEnabled: game.voiceEnabled || false,
       challenges
     });
   } catch (err) {

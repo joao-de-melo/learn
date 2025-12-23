@@ -4,6 +4,20 @@ import { IconDisplay, getRandomIcon } from '../../components/IconDisplay';
 
 export const challengeType = 'counting';
 
+// Generate sample questions for preview (no backend needed)
+export function generatePreview() {
+  const samples = [
+    { count: 3, correct: 3, options: [2, 3, 4, 5] },
+    { count: 5, correct: 5, options: [3, 4, 5, 6] },
+  ];
+
+  return samples.map(({ count, correct, options }) => ({
+    question_type: challengeType,
+    questionData: { count, iconType: getRandomIcon() },
+    answerData: { correct, options },
+  }));
+}
+
 function CountingRenderer({ challenge, selectedAnswer, result, isDisabled, onSelect, correctAnswer, isPreview, t }) {
   const { questionData, answerData } = challenge;
 
@@ -47,9 +61,28 @@ function CountingRenderer({ challenge, selectedAnswer, result, isDisabled, onSel
   );
 }
 
-export default function CountingChallenge({ challenge, onAnswer, onComplete, isPreview, language }) {
+export default function CountingChallenge({
+  challenge,
+  onAnswer,
+  onComplete,
+  isPreview,
+  language,
+  voiceEnabled = false,
+  showHelpOnStart = false,
+  challengeName
+}) {
   return (
-    <BaseChallenge challenge={challenge} onAnswer={onAnswer} onComplete={onComplete} isPreview={isPreview} language={language}>
+    <BaseChallenge
+      challenge={challenge}
+      onAnswer={onAnswer}
+      onComplete={onComplete}
+      isPreview={isPreview}
+      language={language}
+      voiceEnabled={voiceEnabled}
+      showHelpOnStart={showHelpOnStart}
+      challengeTypeId={challengeType}
+      challengeName={challengeName}
+    >
       {(props) => <CountingRenderer {...props} />}
     </BaseChallenge>
   );

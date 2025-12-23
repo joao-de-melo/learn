@@ -1,4 +1,26 @@
-.PHONY: start stop emulators seed frontend install clean deploy
+.PHONY: start stop emulators seed frontend install clean deploy help
+
+# Show available commands
+help:
+	@echo ""
+	@echo "Available commands:"
+	@echo ""
+	@echo "  make start          Start everything (emulators + frontend)"
+	@echo "  make stop           Stop all services"
+	@echo "  make frontend       Start frontend only (with emulators flag)"
+	@echo "  make emulators      Start Firebase emulators (foreground)"
+	@echo "  make seed           Seed local Firestore database"
+	@echo "  make seed-prod      Seed production Firestore database"
+	@echo "  make install        Install all dependencies"
+	@echo "  make clean          Remove all node_modules"
+	@echo ""
+	@echo "  make deploy         Deploy functions + hosting"
+	@echo "  make deploy-all     Deploy everything + seed production"
+	@echo "  make deploy-functions  Deploy Cloud Functions only"
+	@echo "  make deploy-hosting    Deploy Hosting only"
+	@echo "  make deploy-rules      Deploy Firestore rules/indexes"
+	@echo "  make logs           View Firebase Functions logs"
+	@echo ""
 
 # Start everything with Firebase emulators (local development)
 start: install
@@ -33,11 +55,11 @@ start: install
 
 # Start Firebase emulators in background
 emulators-bg:
-	@npx firebase emulators:start > /tmp/firebase-emulators.log 2>&1 &
+	@firebase emulators:start > /tmp/firebase-emulators.log 2>&1 &
 
 # Start Firebase emulators (foreground, shows UI at localhost:4000)
 emulators:
-	npx firebase emulators:start
+	firebase emulators:start
 
 # Install all dependencies
 install:
@@ -51,7 +73,11 @@ install:
 # Seed the database (requires emulators to be running)
 seed:
 	@echo "Seeding Firestore..."
-	@cd backend && FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_PROJECT_ID=learn-dev npm run seed
+	@cd backend && NODE_ENV=local npm run seed
+
+seed-prod:
+	@echo "Seeding production Firestore..."
+	@cd backend && NODE_ENV=production npm run seed
 
 # Start frontend only
 frontend:
@@ -70,23 +96,25 @@ deploy: deploy-functions deploy-hosting
 
 deploy-functions:
 	@echo "Deploying Cloud Functions..."
-	npx firebase deploy --only functions
+	firebase deploy --only functions
 
 deploy-hosting:
 	@echo "Building frontend..."
 	cd frontend && npm run build
 	@echo "Deploying to Firebase Hosting..."
-	npx firebase deploy --only hosting
+	firebase deploy --only hosting
 
 deploy-rules:
 	@echo "Deploying Firestore rules and indexes..."
-	npx firebase deploy --only firestore
+	firebase deploy --only firestore
 
 deploy-all:
 	@echo "Building frontend..."
 	cd frontend && npm run build
 	@echo "Deploying everything..."
-	npx firebase deploy
+	firebase deploy --force
+	@echo "Seeding production database..."
+	@$(MAKE) seed-prod
 
 # Clean node_modules
 clean:
@@ -94,4 +122,4 @@ clean:
 
 # View Firebase Functions logs
 logs:
-	npx firebase functions:log
+	firebase functions:log
