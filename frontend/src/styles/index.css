@@ -2260,6 +2260,14 @@ body {
   }
 }
 
+/* Icon Search Challenge - Override game-mode constraints */
+.game-mode .icon-search-challenge {
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
 /* Selected Challenges List - Reorderable */
 .selected-challenges-list {
   display: flex;

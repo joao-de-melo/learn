@@ -235,7 +235,7 @@ const questionGenerators = {
   },
 
   icon_search: (config) => {
-    const { gridCols = 6, gridRows = 8, targetCount = 1, questionCount = 5, symbolSet = 'colorful' } = config;
+    const { gridCols = 6, gridRows = 8, targetCount = 1, uniqueSymbols = 6, questionCount = 5, symbolSet = 'colorful' } = config;
     // Total cells in the grid
     const totalCells = gridCols * gridRows;
 
@@ -318,8 +318,8 @@ const questionGenerators = {
     // Get the symbol pool for this config
     const symbolPool = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
 
-    // Use only a small subset of symbols (5-8 different ones)
-    const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(totalCells / 6)));
+    // Use the configured number of unique symbols (ensure it's valid)
+    const uniqueSymbolCount = Math.min(symbolPool.length, Math.max(targetCount + 1, uniqueSymbols));
 
     const questions = [];
     for (let q = 0; q < questionCount; q++) {

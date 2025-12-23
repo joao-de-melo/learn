@@ -85,7 +85,7 @@ const CHALLENGE_CONFIGS = {
     ]
   },
   icon_search: {
-    defaults: { gridCols: 6, gridRows: 8, targetCount: 1, symbolSet: 'arrows', questionCount: 5 },
+    defaults: { gridCols: 6, gridRows: 8, targetCount: 1, uniqueSymbols: 6, symbolSet: 'arrows', questionCount: 5 },
     fields: [
       { key: 'symbolSet', labelKey: 'symbolSet', type: 'select', options: [
         { value: 'colorful', labelKey: 'symbolSetColorful' },
@@ -97,6 +97,7 @@ const CHALLENGE_CONFIGS = {
       ]},
       { key: 'gridCols', labelKey: 'gridColumns', type: 'number', min: 4, max: 10 },
       { key: 'gridRows', labelKey: 'gridRows', type: 'number', min: 4, max: 12 },
+      { key: 'uniqueSymbols', labelKey: 'uniqueSymbols', type: 'number', min: 3, max: 12 },
       { key: 'targetCount', labelKey: 'targetCount', type: 'number', min: 1, max: 3 }
     ]
   }

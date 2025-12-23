@@ -85,13 +85,14 @@ const ICON_POOL = SYMBOL_SETS.colorful;
 
 // Generate sample questions for preview (no backend needed)
 export function generatePreview(config = {}) {
-  const { symbolSet = 'arrows', gridCols = 6, gridRows = 8, targetCount = 1 } = config;
+  const { symbolSet = 'arrows', gridCols = 6, gridRows = 8, targetCount = 1, uniqueSymbols = 6 } = config;
   const totalCells = gridCols * gridRows;
 
-  // Get symbols from the selected set (use only a small subset)
+  // Get symbols from the selected set
   const symbols = SYMBOL_SETS[symbolSet] || SYMBOL_SETS.colorful;
   const shuffledSymbols = [...symbols].sort(() => Math.random() - 0.5);
-  const uniqueSymbolCount = Math.min(8, Math.max(5, Math.floor(totalCells / 6)));
+  // Use the configured number of unique symbols
+  const uniqueSymbolCount = Math.min(symbols.length, Math.max(targetCount + 1, uniqueSymbols));
   const availableSymbols = shuffledSymbols.slice(0, uniqueSymbolCount);
 
   const targetIcons = availableSymbols.slice(0, targetCount);
@@ -260,10 +261,14 @@ export default function IconSearchChallenge({
       style={{
         display: 'flex',
         flexDirection: 'column',
+        width: '100%',
         height: '100%',
-        maxHeight: '100vh',
-        padding: '8px',
+        minHeight: '60vh',
+        maxHeight: '85vh',
+        padding: '12px',
         boxSizing: 'border-box',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start',
       }}
     >
       {/* Header - Target icons to find */}
@@ -322,71 +327,58 @@ export default function IconSearchChallenge({
       {/* Grid - takes remaining space */}
       <div style={{
         flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+        gridTemplateRows: `repeat(${gridRows}, 1fr)`,
+        gap: '4px',
         minHeight: 0,
+        overflow: 'hidden',
       }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-            gridTemplateRows: `repeat(${gridRows}, 1fr)`,
-            gap: '4px',
-            width: '100%',
-            maxWidth: '400px',
-            height: '100%',
-            maxHeight: '100%',
-          }}
-        >
-          {grid.map(cell => {
-            const isSelected = selectedPositions.includes(cell.id);
-            const showAsCorrect = submitted && cell.isTarget;
-            const showAsWrong = submitted && isSelected && !cell.isTarget;
-            const showAsMissed = submitted && !isSelected && cell.isTarget;
+        {grid.map(cell => {
+          const isSelected = selectedPositions.includes(cell.id);
+          const showAsCorrect = submitted && cell.isTarget;
+          const showAsWrong = submitted && isSelected && !cell.isTarget;
+          const showAsMissed = submitted && !isSelected && cell.isTarget;
 
-            // Calculate font size based on grid size and symbol type
-            const baseFontSize = gridCols > 8 ? 18 : gridCols > 6 ? 22 : 26;
-            const fontSize = isMonochrome ? baseFontSize + 2 : baseFontSize;
-
-            return (
-              <button
-                key={cell.id}
-                onClick={() => handleCellClick(cell.id)}
-                disabled={isPreview || submitted || showingHelp}
-                style={{
-                  aspectRatio: '1',
-                  fontSize: `${fontSize}px`,
-                  fontFamily: isMonochrome ? 'monospace, sans-serif' : 'inherit',
-                  fontWeight: isMonochrome ? 'bold' : 'normal',
-                  color: '#1f2937',
-                  border: isSelected
-                    ? `3px solid ${isMonochrome ? '#1f2937' : '#4F46E5'}`
-                    : '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  background: showAsCorrect ? '#86efac'
-                    : showAsWrong ? '#fca5a5'
-                    : showAsMissed ? '#fde047'
-                    : isSelected ? (isMonochrome ? '#d1d5db' : '#c7d2fe')
-                    : '#fff',
-                  cursor: (isPreview || submitted || showingHelp) ? 'default' : 'pointer',
-                  transition: 'all 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0,
-                  outline: 'none',
-                  boxShadow: isSelected
-                    ? `0 0 0 2px ${isMonochrome ? 'rgba(31, 41, 55, 0.3)' : 'rgba(79, 70, 229, 0.3)'}`
-                    : 'none',
-                }}
-              >
-                {cell.icon}
-              </button>
-            );
-          })}
-        </div>
+          return (
+            <button
+              key={cell.id}
+              onClick={() => handleCellClick(cell.id)}
+              disabled={isPreview || submitted || showingHelp}
+              style={{
+                fontSize: 'clamp(14px, 3vw, 28px)',
+                fontFamily: isMonochrome ? 'monospace, sans-serif' : 'inherit',
+                fontWeight: isMonochrome ? 'bold' : 'normal',
+                color: '#1f2937',
+                border: isSelected
+                  ? `3px solid ${isMonochrome ? '#1f2937' : '#4F46E5'}`
+                  : '2px solid #e5e7eb',
+                borderRadius: '6px',
+                background: showAsCorrect ? '#86efac'
+                  : showAsWrong ? '#fca5a5'
+                  : showAsMissed ? '#fde047'
+                  : isSelected ? (isMonochrome ? '#d1d5db' : '#c7d2fe')
+                  : '#fff',
+                cursor: (isPreview || submitted || showingHelp) ? 'default' : 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2px',
+                margin: 0,
+                minWidth: 0,
+                minHeight: 0,
+                overflow: 'hidden',
+                outline: 'none',
+                boxShadow: isSelected
+                  ? `0 0 0 2px ${isMonochrome ? 'rgba(31, 41, 55, 0.3)' : 'rgba(79, 70, 229, 0.3)'}`
+                  : 'none',
+              }}
+            >
+              {cell.icon}
+            </button>
+          );
+        })}
       </div>
 
       {/* Submit button - fixed at bottom */}
